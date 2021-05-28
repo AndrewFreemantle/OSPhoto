@@ -34,7 +34,12 @@ namespace OSPhoto
 
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+#if DEBUG
+            services.AddControllersWithViews().AddRazorRuntimeCompilation();
+#else
             services.AddControllersWithViews();
+#endif
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
