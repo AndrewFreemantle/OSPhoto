@@ -1,13 +1,13 @@
-##How to contribute
+## How to contribute
 First of all, thank you for taking the time to contribute to this project. Our aim is to maintain a stable project and try to fix bugs and add new features continuously. You can help us do more.
 
-###Getting started
+### Getting started
 
-####Check out the roadmap
+#### Check out the roadmap
 
 Development is grouped into *milestones*. If there is a feature or bug that is not listed in the **issues** page or there is no one assigned to the issue, please assign yourself to add or fix it! It's always a good idea to discuss the task in the issue to agree the approach to take as your work will often be built upon. 
 
-####Writing some code!
+#### Writing some code!
 
 Contributing to a project on Github is pretty straight forward. If this is you're first time, these are the steps you should take.
 
@@ -31,10 +31,10 @@ Please keep the following in mind:
 - [YAGNI](https://www.martinfowler.com/bliki/Yagni.html) (i.e. implement what's needed, nothing more. Similarly, remove what is no longer needed)
 - Simplicity, readability and maintainability is preferred over complexity 
 
-####Tests
+#### Tests
 
 The project uses a test-first, Test-Driven Design approach. New services must have accompanying unit (or integration) tests and all tests must pass before a PR will be accepted. 
 
-####Documentation
+#### Documentation
 
 Code comments are encouraged for particularly dense or terse methods, but otherwise you should endevour to write clear, intuative and understable software. 
