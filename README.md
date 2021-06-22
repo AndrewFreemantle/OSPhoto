@@ -1,6 +1,6 @@
-## OS photo
+## OSPhoto
 
-OS photo is an open source replacement for [Synology's Photo Station](https://www.synology.com/en-us/dsm/feature/photo_station), a photo and video storage gallery that you self-host on your [own server](https://en.wikipedia.org/wiki/Network-attached_storage).
+OSPhoto is an open source replacement for [Synology's Photo Station](https://www.synology.com/en-us/dsm/feature/photo_station), a photo and video storage gallery that you self-host on your [own server](https://en.wikipedia.org/wiki/Network-attached_storage).
 
 ### About
 
@@ -15,7 +15,7 @@ Started in June 2021, this project aims to be a simple, private (and privacy-foc
 ### Progress
 
 - [x] Initial project creation
-- [ ] Basic web browser interface: folders as albums, navigation, etc
+- [x] Basic web browser interface: folders as albums, navigation, etc
 - [ ] Docker installable with a read-only volume of photos
 - [ ] Basic DS photo app support (login, browse) - [API ref](https://github.com/jamesbo13/syno-photostation-api)
 - [ ] Photo uploads and album management (web, app)

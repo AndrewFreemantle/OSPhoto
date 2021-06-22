@@ -1,6 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSPhoto", "OSPhoto\OSPhoto.csproj", "{9CB3F69C-7AA2-49DE-B36D-D482445D1EA3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSPhoto.Services.Tests", "OSPhoto.Services.Tests\OSPhoto.Services.Tests.csproj", "{D4AE51C1-14D8-494C-92F5-2FEF1DD8C8A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSPhoto.Services", "OSPhoto.Services\OSPhoto.Services.csproj", "{EEF69CDD-E552-4FE3-AB8E-1C26401E1CC5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSPhoto.Web", "OSPhoto.Web\OSPhoto.Web.csproj", "{61EF3095-D34C-423F-95B0-09AA7EC90CA1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -8,9 +12,17 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9CB3F69C-7AA2-49DE-B36D-D482445D1EA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9CB3F69C-7AA2-49DE-B36D-D482445D1EA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9CB3F69C-7AA2-49DE-B36D-D482445D1EA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9CB3F69C-7AA2-49DE-B36D-D482445D1EA3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4AE51C1-14D8-494C-92F5-2FEF1DD8C8A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4AE51C1-14D8-494C-92F5-2FEF1DD8C8A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4AE51C1-14D8-494C-92F5-2FEF1DD8C8A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4AE51C1-14D8-494C-92F5-2FEF1DD8C8A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EEF69CDD-E552-4FE3-AB8E-1C26401E1CC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EEF69CDD-E552-4FE3-AB8E-1C26401E1CC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EEF69CDD-E552-4FE3-AB8E-1C26401E1CC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EEF69CDD-E552-4FE3-AB8E-1C26401E1CC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61EF3095-D34C-423F-95B0-09AA7EC90CA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61EF3095-D34C-423F-95B0-09AA7EC90CA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61EF3095-D34C-423F-95B0-09AA7EC90CA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61EF3095-D34C-423F-95B0-09AA7EC90CA1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
