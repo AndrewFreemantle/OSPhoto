@@ -33,7 +33,7 @@ export default {
   },
 	methods: {
 		imagePath: function() {
-			return `https://localhost:5001/image/${this.item.path}`;
+			return `${process.env.VUE_APP_API_ROOT}/image/${this.item.path}`;
 		},
     onDirectoryClick: function() {
       console.log('[dir.click]', this.item.path );

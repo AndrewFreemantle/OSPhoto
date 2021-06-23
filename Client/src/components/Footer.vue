@@ -9,7 +9,7 @@
 			</ul>
 		</div>
 		<div class="right float-right">
-			v0.1.0
+			v0.2.0
 		</div>
 	</div>
 </template>

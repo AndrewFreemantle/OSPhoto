@@ -47,7 +47,7 @@ export default {
       return hash.substring(2);
     },
     async fetchAlbum(path) {
-      let url = 'http://localhost:5000/album' + ((path == null)
+      let url = `${process.env.VUE_APP_API_ROOT}/album` + ((path == null)
         ? ''
         : `/${path}`);
 

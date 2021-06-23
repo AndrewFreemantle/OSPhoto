@@ -16,7 +16,7 @@ Started in June 2021, this project aims to be a simple, private (and privacy-foc
 
 - [x] Initial project creation
 - [x] Basic web browser interface: folders as albums, navigation, etc
-- [ ] Docker installable with a read-only volume of photos
+- [x] Docker installable with a read-only volume of photos
 - [ ] Basic DS photo app support (login, browse) - [API ref](https://github.com/jamesbo13/syno-photostation-api)
 - [ ] Photo uploads and album management (web, app)
 - [ ] Tagging & descriptions (importable from Photo Station)
