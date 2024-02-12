@@ -1,0 +1,6 @@
+@OSPhoto.Api_HostAddress = http://0.0.0.0:5172
+
+GET {{OSPhoto.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
