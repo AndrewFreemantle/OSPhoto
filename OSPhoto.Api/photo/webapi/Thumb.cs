@@ -19,24 +19,35 @@ public class Thumb : Endpoint<ThumbRequest>
 
     public override async Task HandleAsync(ThumbRequest req, CancellationToken ct)
     {
-        Console.WriteLine($"Thumb CALLED! (id: {req.Id})");
+        Logger.LogInformation("Thumb (id: {id})", req.Id);
 
-        try
+        switch (req.Method)
         {
-            var filePath = File.Exists("../Media/pexels-andre-furtado-1264210-thumb.jpg") ? "../Media/pexels-andre-furtado-1264210-thumb.jpg" /* command line */ : "../../../Media/pexels-andre-furtado-1264210-thumb.jpg"; /* debugger */
-            var fileInfo = new FileInfo(filePath);
+            case RequestMethod.Get:
+                try
+                {
+                    var filePath = File.Exists("../Media/pexels-andre-furtado-1264210-thumb.jpg") ? "../Media/pexels-andre-furtado-1264210-thumb.jpg" /* command line */ : "../../../Media/pexels-andre-furtado-1264210-thumb.jpg"; /* debugger */
+                    var fileInfo = new FileInfo(filePath);
 
-            HttpContext.MarkResponseStart();
-            HttpContext.Response.StatusCode = 200;
-            HttpContext.Response.ContentType = "image/jpeg";
-            // await File.ReadAllBytesAsync(filePath);
+                    HttpContext.MarkResponseStart();
+                    HttpContext.Response.StatusCode = 200;
+                    HttpContext.Response.ContentType = "image/jpeg";
+                    // await File.ReadAllBytesAsync(filePath);
 
-            await SendFileAsync(fileInfo);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            await SendNotFoundAsync();
+                    await SendFileAsync(fileInfo);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Exception returning thumbnail for id: {id}", req.Id);
+                    await SendNotFoundAsync();
+                }
+
+                break;
+            default:
+                Logger.LogError(" > don't know how to handle requested method: {method}"
+                    , req.Method);
+                await SendNoContentAsync();
+                break;
         }
     }
 }

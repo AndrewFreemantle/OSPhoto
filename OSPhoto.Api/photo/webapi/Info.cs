@@ -25,7 +25,18 @@ public class Info : Endpoint<InfoRequest, InfoResponse>
 
     public override async Task HandleAsync(InfoRequest req, CancellationToken ct)
     {
-        Console.WriteLine($"Info CALLED!");
-        await SendAsync(new InfoResponse());
+        Logger.LogInformation("Info (method: {method})", req.Method);
+
+        switch (req.Method)
+        {
+            case RequestMethod.GetInfo:
+                await SendAsync(new InfoResponse());
+                break;
+            default:
+                Logger.LogError(" > don't know how to handle requested method: {method}"
+                    , req.Method);
+                await SendNoContentAsync();
+                break;
+        }
     }
 }

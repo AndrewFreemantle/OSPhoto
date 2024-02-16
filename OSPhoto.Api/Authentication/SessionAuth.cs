@@ -72,7 +72,7 @@ public sealed class SessionAuth : AuthenticationHandler<AuthenticationSchemeOpti
             }
             catch (Exception ex)
             {
-                Logger.Log(LogLevel.Error, ex, "Authentication exception reading body for the session identifier");
+                Logger.LogError(ex, "Authentication exception reading body for the session identifier");
             }
         }
         else

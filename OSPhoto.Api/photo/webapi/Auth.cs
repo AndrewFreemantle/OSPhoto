@@ -1,7 +1,12 @@
+using OSPhoto.Api;
+
 public class AuthRequest : RequestBase
 {
     public string Username { get; set; }
     public string Password { get; set; }
+
+    // login.php uses 'action' instead of 'method'
+    public string Action { get; set; }
 }
 
 public class AuthResponse(string username)
@@ -23,7 +28,7 @@ public class AuthResponseData(string username)
     public bool IsAdmin { get; set; } = false;
     [JsonPropertyName("allow_comment")]
     public bool AllowComment { get; set; } = false;
-    public AuthPermission Permission { get; set; } = new AuthPermission();
+    public Permission Permission { get; set; } = new();
 
     [JsonPropertyName("enable_face_recog")]
     public bool EnableFaceRecog { get; set; } = false;
@@ -35,36 +40,37 @@ public class AuthResponseData(string username)
     public bool ShowDetail { get; set; } = true;
 }
 
-public class AuthPermission
-{
-    // these were false...
-    public bool Browse { get; set; } = true;
-    public bool Upload { get; set; } = true;
-    public bool Manage { get; set; } = true;
-}
-
 public class Auth : Endpoint<AuthRequest, AuthResponse>
 {
     public override void Configure()
     {
         Post("auth.php");
+        // Post(["/photo/mApp/ajax/login.php", "/photo/webapi/auth.php"]);
+        // RoutePrefixOverride(string.Empty);
         AllowFormData(urlEncoded: true);
         AllowAnonymous();
     }
 
     public override async Task HandleAsync(AuthRequest req, CancellationToken ct)
     {
-        Console.WriteLine($"AUTH CALLED: {req.Method}");
+        if (string.IsNullOrEmpty(req.Method))
+            req.Method = req.Action;
 
-        switch (req.Method.ToLowerInvariant())
+        Logger.LogInformation("Auth (method: {method})", req.Method);
+
+        switch (req.Method)
         {
-            case "login":
+            case RequestMethod.Login:
                 var res = new AuthResponse(req.Username);
-                Console.WriteLine($"> {res.Data.Sid}");
+                Logger.LogInformation(" > user: {username}, sid: {sid}"
+                    , res.Data.Username
+                    , res.Data.Sid);
                 await SendAsync(res);
                 break;
+            case RequestMethod.Logout:
             default:
-                Console.WriteLine($"> don't know how to handle requested method: {req.Method}");
+                Logger.LogError(" > don't know how to handle requested method: {method}"
+                    , req.Method);
                 await SendNoContentAsync();
                 break;
         }

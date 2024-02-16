@@ -2,8 +2,10 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using FastEndpoints.Swagger;
 using NSwag;
-using OSPhoto.Api;
 using OSPhoto.Api.Authentication;
+using OSPhoto.Api.Processors;
+using OSPhoto.Common;
+using OSPhoto.Common.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,9 +33,16 @@ builder.Services.SwaggerDocument(o =>
     };
 });
 
-
+// Register implementations
+var contentRootPath = Environment.GetEnvironmentVariable("MEDIA_ROOT") ?? Path.GetFullPath("../Media/");
+builder.Services.AddSingleton<IAlbumService>(_ => new AlbumService(contentRootPath));
 
 var app = builder.Build();
+
+// TODO: is there a way to do this at registration (line 38 above?)
+var albumService = app.Services.GetService(typeof(IAlbumService)) as IAlbumService;
+albumService.SetLogger(app.Logger);
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -47,6 +56,10 @@ if (app.Environment.IsDevelopment())
 app.UseFastEndpoints(c =>
 {
     c.Endpoints.RoutePrefix = "photo/webapi";
+    c.Endpoints.Configurator = ep =>
+    {
+        ep.PreProcessor<AdditionalResponseHeadersPreProcessor>(Order.Before);
+    };
 });
 
 // TODO: move to a catch-all class: https://fast-endpoints.com/docs/misc-conveniences#multiple-verbs-routes

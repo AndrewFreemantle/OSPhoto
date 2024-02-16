@@ -4,8 +4,6 @@ using System.Text.Json;
 
 public class QueryRequest : RequestBase
 {
-    // api=SYNO.API.Info&method=query&version=1&query=all
-    public string Query { get; set; }
 }
 
 public record QueryResponse
@@ -17,17 +15,30 @@ public record QueryResponse
     public JsonDocument Data { get; set; } = JsonDocument.Parse(data);
 }
 
-public class Query : EndpointWithoutRequest<QueryResponse>
+public class Query : Endpoint<QueryRequest, QueryResponse>
 {
     public override void Configure()
     {
         Post("query.php");
+        AllowFormData(urlEncoded: true);
         AllowAnonymous();
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAsync(QueryRequest req, CancellationToken ct)
     {
-        Console.WriteLine($"QUERY CALLED!");
-        await SendAsync(new QueryResponse());
+        // api=SYNO.API.Info&method=query&version=1&query=all
+        Logger.LogInformation("Query (method: {method})", req.Method);
+
+        switch (req.Method)
+        {
+            case RequestMethod.Query:
+                await SendAsync(new QueryResponse());
+                break;
+            default:
+                Logger.LogError(" > don't know how to handle requested method: {method}"
+                    , req.Method);
+                await SendNoContentAsync();
+                break;
+        }
     }
 }

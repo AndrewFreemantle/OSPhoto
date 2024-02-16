@@ -1,6 +1,4 @@
-using System.ComponentModel;
-
-namespace OSPhoto.Api.Models;
+namespace OSPhoto.Common;
 
 public class AlbumResponseData
 {
@@ -66,7 +64,7 @@ public class ItemInfo
     public string CreateDate { get; set; }
     [JsonPropertyName("takendate")]
     public string TakenDate { get; set; }
-    public int Size { get; set; }
+    public long Size { get; set; }
     [JsonPropertyName("resolutionx")]
     public int ResolutionX { get; set; }
     [JsonPropertyName("resolutiony")]
@@ -113,7 +111,7 @@ public class Thumbnails
     public string Signature { get; set; }
 }
 
-public class ThumbnailInfo(int x, int y, int modifiedTime)
+public class ThumbnailInfo(int x, int y, long modifiedTime)
 {
     [JsonPropertyName("resolutionx")]
     public int ResolutionX { get; set; } = x;
@@ -122,7 +120,7 @@ public class ThumbnailInfo(int x, int y, int modifiedTime)
     public int ResolutionY { get; set; } = y;
 
     [JsonPropertyName("mtime")]
-    public int ModifiedTime { get; set; } = modifiedTime;
+    public long ModifiedTime { get; set; } = modifiedTime;
 }
 
 public class PhotoExif

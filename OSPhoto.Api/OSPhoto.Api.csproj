@@ -6,10 +6,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <InvariantGlobalization>true</InvariantGlobalization>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-        <!-- https://fast-endpoints.com/docs/get-started#cancellation-token -->
-        <NoWarn>CA2016</NoWarn>
         <AssemblyVersion>0.0.1</AssemblyVersion>
         <FileVersion>0.0.1</FileVersion>
+        <Version>1.0.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
