@@ -1,5 +1,5 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
+#USER $APP_UID
 WORKDIR /app
 
 ENV MEDIA_ROOT="/Media"
@@ -30,9 +30,10 @@ ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "OSPhoto.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
-CMD ["mkdir", "/Media"]
-COPY --from=build /src/Media /Media
+
+#COPY --from=build /src/Media /Media
 VOLUME ["/Media"]
+
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "OSPhoto.Api.dll"]

@@ -15,7 +15,7 @@ public static class FileSystemInfoExtensions
             var imageFormat = SixLabors.ImageSharp.Image.DetectFormat(fsInfo.FullName);
             return imageFormat != null;
         }
-        catch (UnknownImageFormatException e)
+        catch (Exception ex)
         {
             return false;
         }

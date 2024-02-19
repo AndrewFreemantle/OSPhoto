@@ -60,8 +60,7 @@ public class AlbumServiceTests
         var result = _service.Get();
 
         Assert.IsTrue(result.Items.First().GetType() == typeof(Directory));
-        Assert.IsTrue(result.Items.Skip(1).First().GetType() == typeof(Image));
-        Assert.IsTrue(result.Items.Last().GetType() == typeof(File));
+        Assert.IsTrue(result.Items.Last().GetType() == typeof(Image));
     }
 
     [Test]

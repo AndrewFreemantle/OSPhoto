@@ -1,21 +1,25 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using OSPhoto.Common.Exceptions;
 using OSPhoto.Common.Extensions;
 using OSPhoto.Common.Interfaces;
-using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
-using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Processing;
 
 namespace OSPhoto.Common;
 
-public class AlbumService(string contentRootPath) : IAlbumService
+public class AlbumService : IAlbumService
 {
-    public string ContentRootPath { get; } = contentRootPath;
+    public AlbumService(string contentRootPath)
+    {
+        ContentRootPath = contentRootPath;
+        Logger = NullLogger.Instance;
+    }
+
+    private string ContentRootPath;
     private ILogger Logger;
 
-    public int ThumbnailWidthInPixels { get; } =
-        int.Parse(Environment.GetEnvironmentVariable("THUMB_WIDTH_PX") ?? "350");
+    private int ThumbnailWidthInPixels => int.Parse(Environment.GetEnvironmentVariable("THUMB_WIDTH_PX") ?? "350");
 
     public void SetLogger(ILogger logger) => Logger = logger;
 
@@ -23,7 +27,9 @@ public class AlbumService(string contentRootPath) : IAlbumService
     {
         try
         {
-            var path = string.IsNullOrEmpty(id) ? ContentRootPath : Path.Combine(ContentRootPath, id["album_".Length..].FromHex());
+            var path = string.IsNullOrEmpty(id)
+                ? ContentRootPath
+                : Path.Combine(ContentRootPath, id["album_".Length..].FromHex().TrimStart(Path.DirectorySeparatorChar));
 
             return new AlbumResult(path
                 , ContentRootPath
