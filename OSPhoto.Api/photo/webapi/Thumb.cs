@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Mvc;
+using OSPhoto.Common.Interfaces;
+
 namespace OSPhoto.Api.photo.webapi;
 
 public class ThumbRequest : RequestBase
@@ -10,7 +13,7 @@ public class ThumbRequest : RequestBase
     public string Signature { get; set; }
 }
 
-public class Thumb : Endpoint<ThumbRequest>
+public class Thumb(IAlbumService service) : Endpoint<ThumbRequest>
 {
     public override void Configure()
     {
@@ -19,22 +22,14 @@ public class Thumb : Endpoint<ThumbRequest>
 
     public override async Task HandleAsync(ThumbRequest req, CancellationToken ct)
     {
-        Logger.LogInformation("Thumb (id: {id})", req.Id);
+        Logger.LogInformation("Thumb (id: {id}, sig: {sig})", req.Id, req.Signature);
 
         switch (req.Method)
         {
             case RequestMethod.Get:
                 try
                 {
-                    var filePath = File.Exists("../Media/pexels-andre-furtado-1264210-thumb.jpg") ? "../Media/pexels-andre-furtado-1264210-thumb.jpg" /* command line */ : "../../../Media/pexels-andre-furtado-1264210-thumb.jpg"; /* debugger */
-                    var fileInfo = new FileInfo(filePath);
-
-                    HttpContext.MarkResponseStart();
-                    HttpContext.Response.StatusCode = 200;
-                    HttpContext.Response.ContentType = "image/jpeg";
-                    // await File.ReadAllBytesAsync(filePath);
-
-                    await SendFileAsync(fileInfo);
+                    await SendStreamAsync(service.GetThumbnail(req.Id));
                 }
                 catch (Exception ex)
                 {

@@ -12,30 +12,8 @@ public class AlbumResult
 
     public AlbumResult(string path, string contentRootPath, IEnumerable<ItemBase> contents)
     {
-        // Location = SplitPathIntoBreadcrumbs(path, contentRootPath);
         Path = path;
         ContentRootPath = contentRootPath;
         Items = contents;
-    }
-
-    private IEnumerable<Location> SplitPathIntoBreadcrumbs(string path, string contentRootPath)
-    {
-        if (string.IsNullOrEmpty(path) || string.IsNullOrWhiteSpace(path)) return Enumerable.Empty<Location>();
-
-        var fullPath = new DirectoryInfo(System.IO.Path.Combine(contentRootPath, path));
-        var location = new List<Location>();
-
-        var currentPath = fullPath;
-        while (currentPath != null)
-        {
-            location.Add(new Location(currentPath, contentRootPath));
-            currentPath = currentPath.Parent;
-
-            // Stop walking when we reach the content root
-            if (currentPath != null && currentPath.FullName == contentRootPath) currentPath = null;
-        }
-
-        location.Reverse();
-        return location;
     }
 }

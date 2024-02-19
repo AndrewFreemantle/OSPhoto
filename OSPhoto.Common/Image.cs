@@ -4,12 +4,11 @@ namespace OSPhoto.Common;
 
 public class Image : ItemBase
 {
-    private const string IdPrefix = "photo_";
+    public override string IdPrefix => "photo_";
 
-    public Image(FileInfo fileInfo) : base(fileInfo)
+    public Image(string contentRootPath, FileInfo fileInfo) : base(fileInfo)
     {
-        // TODO: naive implementation - needs _ separated path segments, each Hex encoded...
-        Id = $"{IdPrefix}{Name.ToHex()}";
+        Id = GetIdForPath(contentRootPath, fileInfo);
         Type = "photo";
 
         var imageInfo = SixLabors.ImageSharp.Image.Identify(Path);
@@ -24,11 +23,11 @@ public class Image : ItemBase
             , ResolutionY = imageInfo.Height
         };
 
-        Additional = new Additional
+        Additional = new ItemAdditional
         {
             Thumbnails = new Thumbnails()
             {
-                Small = new ThumbnailInfo(200, 200, mTime)
+                Small = new ThumbnailInfo(350, 200, mTime)
                 , Signature = fileInfo.FullName.ToHex()
             }
         };

@@ -8,4 +8,5 @@ public interface IAlbumService
     Image GetImage(string path);
 
     void SetLogger(ILogger logger);
+    Stream GetThumbnail(string id);
 }
