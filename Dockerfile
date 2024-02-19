@@ -1,16 +1,33 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+USER $APP_UID
 WORKDIR /app
-EXPOSE 80
-EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+ENV MEDIA_ROOT="/Media"
+ENV THUMB_WIDTH_PX=350
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+
+EXPOSE 8080
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
+ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+COPY ["OSPhoto.sln", "/src"]
+COPY ["OSPhoto.Common.Tests/OSPhoto.Common.Tests.csproj", "OSPhoto.Common.Tests/"]
+COPY ["OSPhoto.Common/OSPhoto.Common.csproj", "OSPhoto.Common/"]
+COPY ["OSPhoto.Api/OSPhoto.Api.csproj", "OSPhoto.Api/"]
+RUN dotnet restore -v m "OSPhoto.sln"
 COPY . .
-WORKDIR "/src/OSPhoto.Web"
-RUN dotnet build "OSPhoto.Web.csproj" -c Release -o /app/build
+
+COPY ["OSPhoto.Api/OSPhoto.Api.csproj", "OSPhoto.Api/"]
+RUN dotnet restore -v d "OSPhoto.Api/OSPhoto.Api.csproj"
+COPY . .
+WORKDIR "/src/OSPhoto.Api"
+RUN dotnet build "OSPhoto.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "OSPhoto.Web.csproj" -c Release -o /app/publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "OSPhoto.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 CMD ["mkdir", "/Media"]
@@ -18,4 +35,4 @@ COPY --from=build /src/Media /Media
 VOLUME ["/Media"]
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "OSPhoto.Web.dll"]
+ENTRYPOINT ["dotnet", "OSPhoto.Api.dll"]

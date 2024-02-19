@@ -19,12 +19,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\OSPhoto.Common\OSPhoto.Common.csproj" />
     </ItemGroup>
 
