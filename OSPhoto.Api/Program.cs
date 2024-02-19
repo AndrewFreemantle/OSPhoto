@@ -105,8 +105,12 @@ app.MapMethods("/{**path}", new[] { "GET", "POST", "PUT", "DELETE", "PATCH", "OP
         Sub-Album Selection
         Request: POST /photo/webapi/album.php
            > body: api=SYNO.PhotoStation.Album&method=list&version=1&offset=0&sort_by=preference&id=album_{GUID WITHOUT DASHES}&sort_direction=asc&limit=108&additional=album_permission%2Cvideo_codec%2Cvideo_quality%2Cthumb_size%2Cphoto_exif&type=album%2Cphoto%2Cvideo&PHPSESSID={GUID WITHOUT DASHES}
-        */
 
+
+        // TODO: implement photo...
+        Request: POST /photo/webapi/photo.php
+            > body: api=SYNO.PhotoStation.Photo&method=getinfo&version=1&id=photo_{id}}&additional=photo_exif&PHPSESSID={SESSION ID}d
+        */
     })
     .WithName("CatchAll")
     .WithOpenApi();

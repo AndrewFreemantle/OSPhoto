@@ -27,12 +27,13 @@ public class Image : ItemBase
         {
             Thumbnails = new Thumbnails()
             {
-                Small = new ThumbnailInfo(350, 200, mTime)
+                Small = new ThumbnailInfo(200, 200, mTime)
+                , Large = new ThumbnailInfo(200, 200, mTime)
                 , Signature = fileInfo.FullName.ToHex()
             }
         };
 
-        ThumbnailStatus = "small";
+        ThumbnailStatus = "small,large";
     }
 
     public Image(string name, string path, string contentType) : base(name, path)

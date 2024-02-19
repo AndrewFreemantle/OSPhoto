@@ -19,7 +19,7 @@ public class AlbumService : IAlbumService
     private string ContentRootPath;
     private ILogger Logger;
 
-    private int ThumbnailWidthInPixels => int.Parse(Environment.GetEnvironmentVariable("THUMB_WIDTH_PX") ?? "350");
+    private int ThumbnailWidthInPixels => int.Parse(Environment.GetEnvironmentVariable("THUMB_WIDTH_PX") ?? "2000");
 
     public void SetLogger(ILogger logger) => Logger = logger;
 
@@ -29,7 +29,7 @@ public class AlbumService : IAlbumService
         {
             var path = string.IsNullOrEmpty(id)
                 ? ContentRootPath
-                : Path.Combine(ContentRootPath, id["album_".Length..].FromHex().TrimStart(Path.DirectorySeparatorChar));
+                : Path.Combine(ContentRootPath, id["album_".Length..].FromHex());
 
             return new AlbumResult(path
                 , ContentRootPath

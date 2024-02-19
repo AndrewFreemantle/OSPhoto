@@ -8,7 +8,7 @@ public class Directory : ItemBase
 
     public Directory(string contentRootPath, DirectoryInfo dirInfo) : base(dirInfo)
     {
-        Id = $"{IdPrefix}{dirInfo.FullName[contentRootPath.Length..].ToHex()}";
+        Id = $"{IdPrefix}{dirInfo.FullName[contentRootPath.Length..].TrimStart(System.IO.Path.DirectorySeparatorChar).ToHex()}";
         Type = "album";
 
         Info = new ItemInfo(Name, Name, Name);
