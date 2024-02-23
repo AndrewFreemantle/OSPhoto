@@ -23,13 +23,13 @@ docker run \
   --name='os-photo' \
   --net='bridge' \
   -e 'USERS'='SomeUser=TheirPassword;SomeOtherUser=AndTheirPassword' \
-  -p '5001:5001/tcp' \
+  -p '5000:5000/tcp' \
   -v '/path/to/a/photo-collection/':'/Media':'ro' \
   -v '/path/to/some/persistent/location/for/os-photos/metadata':'/AppData':'rw' \
   'andrewfreemantle/os-photo'
 ```
 
-Once running, OSPhoto will accept https connections on port `5001` using any of the credentials contained in `"USERS"`.
+Once running, OSPhoto will accept http connections on port `5000` using any of the credentials contained in `"USERS"`.
 
 ### Rationale
 
