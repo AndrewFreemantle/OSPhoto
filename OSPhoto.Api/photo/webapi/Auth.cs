@@ -1,4 +1,6 @@
 using OSPhoto.Api;
+using OSPhoto.Common.Interfaces;
+using OSPhoto.Common.Models;
 
 public class AuthRequest : RequestBase
 {
@@ -9,44 +11,56 @@ public class AuthRequest : RequestBase
     public string Action { get; set; }
 }
 
-public class AuthResponse(string username)
+public class AuthResponse(bool success)
 {
-    public bool Success { get; set; } = true;
-    public AuthResponseData Data { get; set; } = new AuthResponseData(username);
+    public bool Success => success;
 }
 
-public class AuthResponseData(string username)
+public class AuthResponseFailure() : AuthResponse(false)
 {
-    // TODO: Store this in session...
-    public string Sid { get; set; } = Guid.NewGuid().ToString().Replace("-", "");
-    public string Username { get; set; } = username;
+    public AuthResponseError Error => new();
 
-    // Permissions
-    [JsonPropertyName("reg_syno_user")]
-    public bool RegSynoUser { get; set; } = true;
-    [JsonPropertyName("is_admin")]
-    public bool IsAdmin { get; set; } = false;
-    [JsonPropertyName("allow_comment")]
-    public bool AllowComment { get; set; } = false;
-    public Permission Permission { get; set; } = new();
-
-    [JsonPropertyName("enable_face_recog")]
-    public bool EnableFaceRecog { get; set; } = false;
-    [JsonPropertyName("allow_public_share")]
-    public bool AllowPublicShare { get; set; } = false;
-    [JsonPropertyName("allow_download")]
-    public bool AllowDownload { get; set; } = true;
-    [JsonPropertyName("show_detail")]
-    public bool ShowDetail { get; set; } = true;
+    public class AuthResponseError
+    {
+        public int Code => 102;     // 102: invalid username or password
+    }
 }
 
-public class Auth : Endpoint<AuthRequest, AuthResponse>
+public class AuthResponseSuccess(string sessionId, string username)
+    : AuthResponse(true)
+{
+    public AuthResponseData Data => new AuthResponseData(sessionId, username);
+
+    public class AuthResponseData(string sessionId, string username)
+    {
+        public string Sid => sessionId;
+        public string Username => username;
+
+        // Permissions
+        [JsonPropertyName("reg_syno_user")]
+        public bool RegSynoUser { get; set; } = true;
+        [JsonPropertyName("is_admin")]
+        public bool IsAdmin { get; set; } = false;
+        [JsonPropertyName("allow_comment")]
+        public bool AllowComment { get; set; } = false;
+        public Permission Permission { get; set; } = new();
+
+        [JsonPropertyName("enable_face_recog")]
+        public bool EnableFaceRecog { get; set; } = false;
+        [JsonPropertyName("allow_public_share")]
+        public bool AllowPublicShare { get; set; } = false;
+        [JsonPropertyName("allow_download")]
+        public bool AllowDownload { get; set; } = true;
+        [JsonPropertyName("show_detail")]
+        public bool ShowDetail { get; set; } = true;
+    }
+}
+
+public class Auth(IUserService userService) : Endpoint<AuthRequest, AuthResponse>
 {
     public override void Configure()
     {
         Post("auth.php");
-        // Post(["/photo/mApp/ajax/login.php", "/photo/webapi/auth.php"]);
-        // RoutePrefixOverride(string.Empty);
         AllowFormData(urlEncoded: true);
         AllowAnonymous();
     }
@@ -61,13 +75,23 @@ public class Auth : Endpoint<AuthRequest, AuthResponse>
         switch (req.Method)
         {
             case RequestMethod.Login:
-                var res = new AuthResponse(req.Username);
-                Logger.LogInformation(" > user: {username}, sid: {sid}"
-                    , res.Data.Username
-                    , res.Data.Sid);
-                await SendAsync(res);
+                var sessionId = await userService.LoginAsync(req.Username, req.Password);
+                if (string.IsNullOrEmpty(sessionId))
+                    await SendAsync(new AuthResponseFailure());
+                else
+                {
+                    var res = new AuthResponseSuccess(sessionId, req.Username);
+                    Logger.LogInformation(" > user: {username}, sid: {sid}"
+                        , res.Data.Username
+                        , res.Data.Sid);
+                    await SendAsync(res);
+                }
                 break;
             case RequestMethod.Logout:
+                await userService.LogoutAsync(req.SessionId);
+                Logger.LogInformation(" > sid: {sid} logged out", req.SessionId);
+                await SendAsync(new AuthResponse(true));
+                break;
             default:
                 Logger.LogError(" > don't know how to handle requested method: {method}"
                     , req.Method);

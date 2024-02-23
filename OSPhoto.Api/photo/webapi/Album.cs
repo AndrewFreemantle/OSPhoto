@@ -1,5 +1,6 @@
 using OSPhoto.Common;
 using OSPhoto.Common.Interfaces;
+using OSPhoto.Common.Models;
 
 namespace OSPhoto.Api.photo.webapi;
 

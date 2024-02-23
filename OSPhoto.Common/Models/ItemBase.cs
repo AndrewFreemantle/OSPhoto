@@ -1,6 +1,6 @@
 using OSPhoto.Common.Extensions;
 
-namespace OSPhoto.Common;
+namespace OSPhoto.Common.Models;
 
 public abstract class ItemBase
 {

@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace OSPhoto.Common.Extensions;
 
 public static class StringExtensions
@@ -8,7 +10,7 @@ public static class StringExtensions
     /// <returns>a new encoded string</returns>
     public static string ToHex(this string str)
     {
-        return string.Concat(str.Select(c => ((int)c).ToString("X2")));
+        return string.Concat(WebUtility.UrlEncode(str).Select(c => ((int)c).ToString("X2")));
     }
 
     /// <summary>
@@ -31,6 +33,6 @@ public static class StringExtensions
             .Select(i => Convert.ToByte(hexadecimalEncodedString.Substring(i * 2, 2), 16))
             .ToArray();
 
-        return System.Text.Encoding.UTF8.GetString(bytes);
+        return WebUtility.UrlDecode(System.Text.Encoding.UTF8.GetString(bytes));
     }
 }

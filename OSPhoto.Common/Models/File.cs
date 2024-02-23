@@ -1,3 +1,5 @@
+using OSPhoto.Common.Models;
+
 namespace OSPhoto.Common;
 
 public class File : ItemBase

@@ -1,4 +1,4 @@
-namespace OSPhoto.Common;
+namespace OSPhoto.Common.Models;
 
 public class ThumbnailInfo(int x, int y, long modifiedTime)
 {

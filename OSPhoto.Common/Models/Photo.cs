@@ -1,14 +1,14 @@
 using OSPhoto.Common.Extensions;
 
-namespace OSPhoto.Common;
+namespace OSPhoto.Common.Models;
 
-public class Image : ItemBase
+public class Photo : ItemBase
 {
     public override string IdPrefix => "photo_";
 
-    public Image(string contentRootPath, FileInfo fileInfo) : base(fileInfo)
+    public Photo(string mediaPath, FileInfo fileInfo) : base(fileInfo)
     {
-        Id = GetIdForPath(contentRootPath, fileInfo);
+        Id = GetIdForPath(mediaPath, fileInfo);
         Type = "photo";
 
         var imageInfo = SixLabors.ImageSharp.Image.Identify(Path);
@@ -36,7 +36,7 @@ public class Image : ItemBase
         ThumbnailStatus = "small,large";
     }
 
-    public Image(string name, string path, string contentType) : base(name, path)
+    public Photo(string name, string path, string contentType) : base(name, path)
     {
         ContentType = contentType;
     }

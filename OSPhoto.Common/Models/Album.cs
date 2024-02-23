@@ -1,14 +1,14 @@
 using OSPhoto.Common.Extensions;
 
-namespace OSPhoto.Common;
+namespace OSPhoto.Common.Models;
 
-public class Directory : ItemBase
+public class Album : ItemBase
 {
     public override string IdPrefix => "album_";
 
-    public Directory(string contentRootPath, DirectoryInfo dirInfo) : base(dirInfo)
+    public Album(string mediaPath, DirectoryInfo dirInfo) : base(dirInfo)
     {
-        Id = $"{IdPrefix}{dirInfo.FullName[contentRootPath.Length..].TrimStart(System.IO.Path.DirectorySeparatorChar).ToHex()}";
+        Id = $"{IdPrefix}{dirInfo.FullName[mediaPath.Length..].TrimStart(System.IO.Path.DirectorySeparatorChar).ToHex()}";
         Type = "album";
 
         Info = new ItemInfo(Name, Name, Name);

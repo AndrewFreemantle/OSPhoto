@@ -7,3 +7,4 @@ riderModule.iml
 app.db
 *.user
 /node_modules/
+AppData/

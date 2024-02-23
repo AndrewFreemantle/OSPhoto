@@ -10,13 +10,30 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="FastEndpoints.Attributes" Version="5.21.2" />
+      <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+      <PackageReference Include="FastEndpoints.Attributes" Version="5.22.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.2">
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        <PrivateAssets>all</PrivateAssets>
+      </PackageReference>
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.2" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
       <PackageReference Include="MimeTypes" Version="2.4.1">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="SixLabors.ImageSharp" Version="3.1.2" />
+    </ItemGroup>
+    
+    <!-- source: https://github.com/BcryptNet/bcrypt.net#dotnet6-1 -->
+    <ItemGroup>
+        <!-- emits global using BcryptNet = global::BCrypt.Net.BCrypt; -->
+        <Using Include="BCrypt.Net.BCrypt" Alias="BC"/>
+    </ItemGroup>
+    <ItemGroup>
+      <Compile Remove="AlbumModels.cs" />
+      <Compile Remove="Location.cs" />
     </ItemGroup>
     
 </Project>

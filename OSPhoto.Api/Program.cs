@@ -1,13 +1,31 @@
 using System.Text;
-using Microsoft.AspNetCore.Authentication;
 using FastEndpoints.Swagger;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
 using NSwag;
 using OSPhoto.Api.Authentication;
 using OSPhoto.Api.Processors;
 using OSPhoto.Common;
+using OSPhoto.Common.Database;
 using OSPhoto.Common.Interfaces;
+using OSPhoto.Common.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+const string MEDIA_PATH = "MEDIA_PATH";             // full path to the media (photos & videos)
+const string APPDATA_PATH = "APPDATA_PATH";         // full path for OSPhoto's application data
+const string DATABASE_PATH = "DATABASE_PATH";       // full path for OSPhoto's database
+
+const string DATABASE_SUB_PATH = "database";
+const string DATABASE_FILENAME = "osphoto.db";
+
+string mediaPath = Environment.GetEnvironmentVariable(MEDIA_PATH) ?? "/Media";
+string appDataPath = Environment.GetEnvironmentVariable(APPDATA_PATH) ?? "/AppData";
+string databasePath = Environment.GetEnvironmentVariable(DATABASE_PATH)
+                      ?? Path.Join(appDataPath, DATABASE_SUB_PATH, DATABASE_FILENAME); // default: /AppData/database/osphoto.db
+
+Environment.SetEnvironmentVariable(MEDIA_PATH, mediaPath);
+Environment.SetEnvironmentVariable(DATABASE_PATH, databasePath);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -15,6 +33,9 @@ builder.Services
     .AddEndpointsApiExplorer()
     .AddSwaggerGen()
     .AddFastEndpoints()
+    .AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlite($"Data Source={databasePath};Version=3")
+    )
     .AddAuthorization()
     .AddAuthentication(SessionAuth.SchemeName)
     .AddScheme<AuthenticationSchemeOptions, SessionAuth>(SessionAuth.SchemeName, null);
@@ -34,15 +55,11 @@ builder.Services.SwaggerDocument(o =>
 });
 
 // Register implementations
-var contentRootPath = Environment.GetEnvironmentVariable("MEDIA_ROOT") ?? Path.GetFullPath("../Media/");
-builder.Services.AddSingleton<IAlbumService>(_ => new AlbumService(contentRootPath));
+builder.Services
+    .AddScoped<IUserService, UserService>()
+    .AddSingleton<IAlbumService, AlbumService>();
 
 var app = builder.Build();
-
-// TODO: is there a way to do this at registration (line 38 above?)
-var albumService = app.Services.GetService(typeof(IAlbumService)) as IAlbumService;
-albumService.SetLogger(app.Logger);
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -51,7 +68,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.UseFastEndpoints(c =>
@@ -62,6 +79,16 @@ app.UseFastEndpoints(c =>
         ep.PreProcessor<AdditionalResponseHeadersPreProcessor>(Order.Before);
     };
 });
+
+// Ensure the the database is created
+using (var scope = app.Services.CreateScope())
+{
+    using (var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>())
+    {
+        dbContext.CreateDatabase(databasePath);
+        dbContext.SeedUsers(Environment.GetEnvironmentVariable("USERS"));
+    }
+}
 
 // TODO: move to a catch-all class: https://fast-endpoints.com/docs/misc-conveniences#multiple-verbs-routes
 app.MapMethods("/{**path}", new[] { "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" }, async (ctx) =>

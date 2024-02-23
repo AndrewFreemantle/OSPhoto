@@ -1,4 +1,6 @@
 
+namespace OSPhoto.Common.Models;
+
 public class Permission
 {
     public bool Browse { get; set; }

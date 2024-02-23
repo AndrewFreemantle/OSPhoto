@@ -1,4 +1,4 @@
-namespace OSPhoto.Common;
+namespace OSPhoto.Common.Models;
 
 public class Thumbnails
 {

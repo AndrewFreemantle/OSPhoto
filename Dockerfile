@@ -16,12 +16,10 @@ COPY ["OSPhoto.sln", "/src"]
 COPY ["OSPhoto.Common.Tests/OSPhoto.Common.Tests.csproj", "OSPhoto.Common.Tests/"]
 COPY ["OSPhoto.Common/OSPhoto.Common.csproj", "OSPhoto.Common/"]
 COPY ["OSPhoto.Api/OSPhoto.Api.csproj", "OSPhoto.Api/"]
-RUN dotnet restore -v m "OSPhoto.sln"
+RUN dotnet restore "OSPhoto.sln"
+
 COPY . .
 
-COPY ["OSPhoto.Api/OSPhoto.Api.csproj", "OSPhoto.Api/"]
-RUN dotnet restore -v d "OSPhoto.Api/OSPhoto.Api.csproj"
-COPY . .
 WORKDIR "/src/OSPhoto.Api"
 RUN dotnet build "OSPhoto.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 

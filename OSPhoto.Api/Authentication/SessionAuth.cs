@@ -5,8 +5,7 @@ using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
-
-// using ISystemClock = Microsoft.Extensions.Internal.ISystemClock;
+using OSPhoto.Common.Interfaces;
 
 namespace OSPhoto.Api.Authentication;
 
@@ -16,10 +15,16 @@ public sealed class SessionAuth : AuthenticationHandler<AuthenticationSchemeOpti
     internal const string SchemeName = "Session";
     public const string SessionPropertyName = "PHPSESSID";
 
+    private IUserService _userService;
+
     public SessionAuth(
         IOptionsMonitor<AuthenticationSchemeOptions> options
+        , IUserService userService
         , ILoggerFactory logger
-        , UrlEncoder encoder) : base(options, logger, encoder) { }
+        , UrlEncoder encoder) : base(options, logger, encoder)
+    {
+        _userService = userService;
+    }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
@@ -27,7 +32,7 @@ public sealed class SessionAuth : AuthenticationHandler<AuthenticationSchemeOpti
             return await Task.FromResult(AuthenticateResult.NoResult());
 
         var sessionId = await GetSessionIdFromRequestAsync();
-        if (!await IsSessionIdValidAsync(sessionId))
+        if (!await _userService.IsSessionIdValidAsync(sessionId))
             return await Task.FromResult(AuthenticateResult.Fail("Invalid Session"));
 
         return await Task.FromResult(AuthenticateResult.Success(await CreateAuthTicketAsync(sessionId)));
@@ -81,12 +86,6 @@ public sealed class SessionAuth : AuthenticationHandler<AuthenticationSchemeOpti
         return await Task.FromResult(sessionId);
     }
 
-    private async Task<bool> IsSessionIdValidAsync(string sessionId)
-    {
-        // TODO: validate the session id
-        return await Task.FromResult(sessionId != string.Empty);
-    }
-
     private async Task<AuthenticationTicket> CreateAuthTicketAsync(string sessionId)
     {
         // TODO: retrieve the user's claims/roles/permissions from a db/cache
@@ -96,9 +95,8 @@ public sealed class SessionAuth : AuthenticationHandler<AuthenticationSchemeOpti
             new Claim("permissions", "browse"),
             new Claim("permissions", "upload"),
             new Claim("permissions", "manage"),
-            new Claim("permissions", "browse"),
         }, authenticationType: SchemeName);
-        var roles = new[] { "SomeRoleName" };
+        var roles = Array.Empty<string>(); // new[] { "SomeRoleName" };
         var principle = new GenericPrincipal(identity, roles);
         var ticket = new AuthenticationTicket(principle, SchemeName);
 
