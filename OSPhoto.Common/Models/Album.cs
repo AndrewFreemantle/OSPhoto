@@ -4,7 +4,7 @@ namespace OSPhoto.Common.Models;
 
 public class Album : ItemBase
 {
-    public override string IdPrefix => "album_";
+    public new static string IdPrefix => "album_";
 
     public Album(string mediaPath, DirectoryInfo dirInfo) : base(dirInfo)
     {
@@ -18,11 +18,6 @@ public class Album : ItemBase
         Additional = new ItemAdditional
         {
             Thumbnails = new Thumbnails()
-            {
-                // Small = new ThumbnailInfo(200, 200, mTime)
-                // , Signature = dirInfo.FullName.ToHex()
-            }
-
         };
         ThumbnailStatus = "default";
     }

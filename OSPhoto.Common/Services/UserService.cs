@@ -51,17 +51,21 @@ public class UserService(ApplicationDbContext dbContext, ILogger<UserService> lo
     {
         try
         {
-            // invalidate any existing sessions for this user
-            await dbContext
-                .Database
-                .ExecuteSqlRawAsync("DELETE FROM sessions WHERE Username = @p0", username);
+            using (var trans = await dbContext.Database.BeginTransactionAsync())
+            {
+                // invalidate any existing sessions for this user
+                await dbContext
+                    .Database
+                    .ExecuteSqlRawAsync("DELETE FROM sessions WHERE Username = @p0", username);
 
-            var session = new Session(username);
-            dbContext.Sessions.Add(session);
+                var session = new Session(username);
+                dbContext.Sessions.Add(session);
 
-            await dbContext.SaveChangesAsync();
+                await dbContext.SaveChangesAsync();
+                await trans.CommitAsync();
 
-            return session.SessionId;
+                return session.SessionId;
+            }
         }
         catch (Exception ex)
         {

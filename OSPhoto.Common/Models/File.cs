@@ -1,10 +1,8 @@
-using OSPhoto.Common.Models;
-
-namespace OSPhoto.Common;
+namespace OSPhoto.Common.Models;
 
 public class File : ItemBase
 {
-    public override string IdPrefix => "file_";
+    public new static string IdPrefix => "file_";
 
     public File(string name, string path) : base(name, path)
     {

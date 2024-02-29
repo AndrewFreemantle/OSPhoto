@@ -6,13 +6,14 @@ using OSPhoto.Common.Services;
 
 namespace OSPhoto.Common.Tests.Services;
 
+[TestFixture]
 public class UserServiceTests
 {
     private IUserService sut;  // sut = System Under Test
 
     private List<Tuple<string, string>> _users = [];
 
-    [SetUp]
+    [OneTimeSetUp]
     public void SetUp()
     {
         _users.Add(new Tuple<string, string>("User1", "Password1"));

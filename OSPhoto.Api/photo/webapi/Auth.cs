@@ -26,10 +26,9 @@ public class AuthResponseFailure() : AuthResponse(false)
     }
 }
 
-public class AuthResponseSuccess(string sessionId, string username)
-    : AuthResponse(true)
+public class AuthResponseSuccess(string sessionId, string username) : AuthResponse(true)
 {
-    public AuthResponseData Data => new AuthResponseData(sessionId, username);
+    public AuthResponseData Data => new (sessionId, username);
 
     public class AuthResponseData(string sessionId, string username)
     {

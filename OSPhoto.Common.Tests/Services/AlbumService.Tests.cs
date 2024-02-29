@@ -77,11 +77,11 @@ public class AlbumServiceTests
     }
 
     [Test]
-    public void CanGetImage()
+    public void CanGetPhoto()
     {
         var result = _service.Get();
 
-        var image = _service.GetImage(result.Items.OfType<Photo>().First().Path);
+        var image = _service.GetPhoto(result.Items.OfType<Photo>().First().Id);
         Assert.IsInstanceOf<Photo>(image);
     }
 }

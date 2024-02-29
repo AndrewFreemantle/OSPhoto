@@ -5,13 +5,13 @@ using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
+using File = OSPhoto.Common.Models.File;
 
 namespace OSPhoto.Common.Services;
 
 public class AlbumService(ILogger<AlbumService> logger) : IAlbumService
 {
     private string MediaPath = Environment.GetEnvironmentVariable("MEDIA_PATH");
-    private int ThumbnailWidthInPixels => int.Parse(Environment.GetEnvironmentVariable("THUMB_WIDTH_PX") ?? "2000");
 
     public AlbumResult Get(string id = "")
     {
@@ -19,7 +19,7 @@ public class AlbumService(ILogger<AlbumService> logger) : IAlbumService
         {
             var path = string.IsNullOrEmpty(id)
                 ? MediaPath
-                : Path.Combine(MediaPath, id["album_".Length..].FromHex());
+                : Path.Combine(MediaPath, id[Album.IdPrefix.Length..].FromHex());
 
             return new AlbumResult(GetContentDirectory(path)
                 .EnumerateFileSystemInfos()
@@ -40,31 +40,21 @@ public class AlbumService(ILogger<AlbumService> logger) : IAlbumService
         // grab the file, then return a resized version
         var memoryStream = new MemoryStream();
 
-        var imagePath = Path.Combine(MediaPath, ItemBase.GetPathFromId(id, "photo_"));
+        var imagePath = Path.Combine(MediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix));
 
         using (var image = SixLabors.ImageSharp.Image.Load(imagePath))
         {
-            image.Mutate(x => x.Resize(ThumbnailWidthInPixels, 0));
+            image.Mutate(x => x.Resize(ThumbnailInfo.ThumbnailWidthInPixels, 0));
             image.Save(memoryStream, new JpegEncoder());
             memoryStream.Position = 0;
             return memoryStream;
         }
     }
 
-    public Photo GetImage(string path)
+    public Photo GetPhoto(string id)
     {
-        try
-        {
-            var fsInfo = new FileInfo(Path.Combine(MediaPath, path));
-            var image = ConvertToItemBase(fsInfo);
-
-            return new Photo(image.Name, image.Path, fsInfo.ContentType());
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Exception getting image for path {path}", path);
-            throw;
-        }
+        var photoPath = Path.Combine(MediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix));
+        return ConvertToItemBase(new FileInfo(photoPath)) as Photo;
     }
 
     private DirectoryInfo GetContentDirectory(string path = null)

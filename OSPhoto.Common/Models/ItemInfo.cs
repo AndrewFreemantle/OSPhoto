@@ -1,3 +1,7 @@
+using OSPhoto.Common.Extensions;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Metadata.Profiles.Exif;
+
 namespace OSPhoto.Common.Models;
 
 public class ItemInfo
@@ -10,11 +14,41 @@ public class ItemInfo
         Description = description;
     }
 
+    public ItemInfo(FileInfo fileInfo, ImageInfo imageInfo)
+    {
+        // file info properties
+        SharePath = fileInfo.DirectoryName;
+        Name = fileInfo.Name;
+        Title = fileInfo.Name;      // TODO: grab this from the database?
+        Description = "";           // TODO: grab this from the database
+
+        CreateDate = fileInfo.CreationTimeUtc.ToString("yyyy-MM-dd HH:mm:ss");
+        Size = fileInfo.Length;
+
+
+        // photo properties
+        if (imageInfo.Metadata.ExifProfile == null)
+            return;
+
+        var exif = imageInfo.Metadata.ExifProfile;
+
+        TakenDate = exif.GetValueString(ExifTag.DateTimeOriginal)
+                    ?? exif.GetValueString(ExifTag.DateTime)
+                    ?? fileInfo.CreationTimeUtc.ToString("yyyy-MM-dd HH:mm:ss");
+
+        ResolutionX = imageInfo.Width;
+        ResolutionY = imageInfo.Height;
+
+        // TODO: Get Orientation values from exif (ExifTagValue.Orientation)
+        Rotation = exif.GetValueUShort(ExifTag.Orientation);
+        Rotated = Rotation != 1;
+
+        Latitude = exif.GetGpsLatitudeAsDecimalDegrees();
+        Longitude = exif.GetGpsLongitudeAsDecimalDegrees();
+    }
+
     [JsonPropertyName("sharepath")]
     public string SharePath { get; set; }
-    /// <summary>
-    /// Filename?
-    /// </summary>
     public string Name { get; set; }
     public string Title { get; set; }
     public string Description { get; set; } = string.Empty;
@@ -41,10 +75,10 @@ public class ItemInfo
     public bool Rotated { get; set; } = false;
     [JsonPropertyName("rotate_version")]
     public int RotateVersion { get; set; } = 0;
-    public int Rotation { get; set; }
+    public ushort? Rotation { get; set; }
     [JsonPropertyName("lat")]
-    public int Latitude { get; set; } = 0;
+    public double? Latitude { get; set; }
     [JsonPropertyName("lng")]
-    public int Longitude { get; set; } = 0;
+    public double? Longitude { get; set; }
     public int Rating { get; set; } = 0;
 }

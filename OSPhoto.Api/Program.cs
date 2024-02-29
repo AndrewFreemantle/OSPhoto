@@ -129,15 +129,36 @@ app.MapMethods("/{**path}", new[] { "GET", "POST", "PUT", "DELETE", "PATCH", "OP
            > body: api=SYNO.PhotoStation.Category&method=list&version=1&limit=2147483647&PHPSESSID={GUID WITHOUT DASHES}&offset=0
            < {"success":true,"data":{"total":0,"offset":0,"categories":[]}}
 
-        Sub-Album Selection
+        // Sub-Album Selection
         Request: POST /photo/webapi/album.php
            > body: api=SYNO.PhotoStation.Album&method=list&version=1&offset=0&sort_by=preference&id=album_{GUID WITHOUT DASHES}&sort_direction=asc&limit=108&additional=album_permission%2Cvideo_codec%2Cvideo_quality%2Cthumb_size%2Cphoto_exif&type=album%2Cphoto%2Cvideo&PHPSESSID={GUID WITHOUT DASHES}
 
-
-        // TODO: implement photo...
+        // Photo
         Request: POST /photo/webapi/photo.php
-            > body: api=SYNO.PhotoStation.Photo&method=getinfo&version=1&id=photo_{id}}&additional=photo_exif&PHPSESSID={SESSION ID}d
+            > body: api=SYNO.PhotoStation.Photo&method=getinfo&version=1&id={PHOTO ID}&additional=photo_exif&PHPSESSID={SESSION ID}
+
+        // TODO: implement comment...
+        Request: POST /photo/webapi/comment.php
+           > body: api=SYNO.PhotoStation.Comment&method=list&version=1&id={PHOTO ID}&PHPSESSID={SESSION ID}
+           < {"success":true,"data":{"comments":[]}}
+
+        // TODO: implement cover... (set a cover photo for an album)
+        Request: POST /photo/webapi/cover.php
+           > body: api=SYNO.PhotoStation.Cover&method=set&version=1&id={ALBUM ID}&item_id={PHOTO_ID}&PHPSESSID={SESSION ID}
+
+
+        // TODO: implement tag...
+        Request: POST /photo/webapi/tag.php
+           > body: api=SYNO.PhotoStation.Tag&method=list&version=1&PHPSESSID={SESSION ID}&additional=info&offset=0&type=desc&limit=-1
+           < {"success":true,"data":{"total":1,"offset":1,"tags":[{"id":"tag_1","type":"tag","tag_type":"desc","name":"SOME TAG NAME (e.g. vibrant)","additional":{"info":{"name":"SOME TAG NAME (e.g. vibrant)"}}}]}}
+
+        // TODO: implement photo_tag...
+        Request: POST /photo/webapi/photo_tag.php
+           > body: api=SYNO.PhotoStation.PhotoTag&method=list&version=1&PHPSESSID={SESSION_ID}&id={PHOTO ID}&additional=info&type=people%2Cdesc%2Cgeo
+           < {"success":true,"data":{"tags":[]}}
         */
+
+
     })
     .WithName("CatchAll")
     .WithOpenApi();

@@ -4,7 +4,7 @@ namespace OSPhoto.Common.Models;
 
 public abstract class ItemBase
 {
-    public abstract string IdPrefix { get; }
+    public static string IdPrefix => "itembase_";
 
     public ItemBase(FileSystemInfo fsInfo)
     {
@@ -41,9 +41,9 @@ public abstract class ItemBase
     public string ThumbnailStatus { get; set; }
 
 
-    public string GetIdForPath(string contentRootPath, FileSystemInfo fsInfo)
+    public string GetIdForPath(string mediaPath, FileSystemInfo fsInfo, string idPrefix)
     {
-        var rootDirInfo = new DirectoryInfo(contentRootPath.TrimEnd(System.IO.Path.DirectorySeparatorChar));
+        var rootDirInfo = new DirectoryInfo(mediaPath.TrimEnd(System.IO.Path.DirectorySeparatorChar));
         var parts = new List<string>();
 
         if (fsInfo is FileInfo fileInfo)
@@ -58,7 +58,7 @@ public abstract class ItemBase
 
         parts.Reverse();
 
-        return $"{IdPrefix}{string.Join("_", parts)}";
+        return $"{idPrefix}{string.Join("_", parts)}";
     }
 
     public static string GetPathFromId(string id, string idPrefix)
