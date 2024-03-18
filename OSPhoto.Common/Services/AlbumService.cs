@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using OSPhoto.Common.Database;
 using OSPhoto.Common.Exceptions;
 using OSPhoto.Common.Extensions;
 using OSPhoto.Common.Interfaces;
@@ -9,7 +10,7 @@ using File = OSPhoto.Common.Models.File;
 
 namespace OSPhoto.Common.Services;
 
-public class AlbumService(ILogger<AlbumService> logger) : IAlbumService
+public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> logger) : IAlbumService
 {
     private string MediaPath = Environment.GetEnvironmentVariable("MEDIA_PATH");
 
@@ -74,7 +75,7 @@ public class AlbumService(ILogger<AlbumService> logger) : IAlbumService
             return new Album(MediaPath, directoryInfo);
 
         if (fsInfo is FileInfo fileInfo && fileInfo.IsImageFileType())
-            return new Photo(MediaPath, fileInfo);
+            return new Photo(MediaPath, fileInfo, dbContext);
 
         // shouldn't occur, but handle it anyway...
         return new File(fsInfo.Name, itemPath);

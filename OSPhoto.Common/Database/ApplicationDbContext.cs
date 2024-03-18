@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using OSPhoto.Common.Models;
+using OSPhoto.Common.Database.Models;
 
 namespace OSPhoto.Common.Database;
 
@@ -7,6 +7,7 @@ public class ApplicationDbContext : DbContext
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<Session> Sessions => Set<Session>();
+    public DbSet<Photo> Photos => Set<Photo>();
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {

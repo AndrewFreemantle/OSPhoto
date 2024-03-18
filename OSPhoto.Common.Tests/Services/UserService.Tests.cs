@@ -21,10 +21,8 @@ public class UserServiceTests
 
         Environment.SetEnvironmentVariable("USERS", $"{string.Join(';', _users.Select(u => $"{u.Item1}={u.Item2}"))}");
 
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlite("Data Source=:memory:;Version=3")
-            .Options;
-        var dbContext = new ApplicationDbContext(options);
+
+        var dbContext = Utilities.GetInMemoryDbContext();
         var logger = new Logger<UserService>(new LoggerFactory());
 
         dbContext.Database.OpenConnection();
@@ -40,14 +38,13 @@ public class UserServiceTests
     {
         var user = _users.First();
         var sessionId = await sut.LoginAsync(user.Item1, user.Item2);
-        Assert.IsFalse(string.IsNullOrEmpty(sessionId));
-
-        Assert.IsTrue(await sut.IsSessionIdValidAsync(sessionId));
+        Assert.That(sessionId, Is.Not.Null & Is.Not.Empty);
+        Assert.That(await sut.IsSessionIdValidAsync(sessionId));
     }
 
     [Test]
     public async Task RandomSessionIdsAreInvalid()
     {
-        Assert.IsFalse(await sut.IsSessionIdValidAsync(Guid.NewGuid().ToString()));
+        Assert.That(await sut.IsSessionIdValidAsync(Guid.NewGuid().ToString()), Is.False);
     }
 }

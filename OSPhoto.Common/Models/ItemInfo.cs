@@ -1,6 +1,7 @@
 using OSPhoto.Common.Extensions;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Metadata.Profiles.Exif;
+using DbPhoto = OSPhoto.Common.Database.Models.Photo;
 
 namespace OSPhoto.Common.Models;
 
@@ -14,13 +15,13 @@ public class ItemInfo
         Description = description;
     }
 
-    public ItemInfo(FileInfo fileInfo, ImageInfo imageInfo)
+    public ItemInfo(FileInfo fileInfo, ImageInfo imageInfo, string? title = null, string? description = null)
     {
         // file info properties
         SharePath = fileInfo.DirectoryName;
         Name = fileInfo.Name;
-        Title = fileInfo.Name;      // TODO: grab this from the database?
-        Description = "";           // TODO: grab this from the database
+        Title = title ?? fileInfo.Name;
+        Description = description ?? string.Empty;
 
         CreateDate = fileInfo.CreationTimeUtc.ToString("yyyy-MM-dd HH:mm:ss");
         Size = fileInfo.Length;

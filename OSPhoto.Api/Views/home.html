@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hello Bulma!</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
+<body>
+<section class="hero is-success">
+    <div class="hero-body">
+        <div class="columns is-mobile">
+            <div class="column has-text-centered is-one-fifth">
+                <img src="https://github.com/AndrewFreemantle/OSPhoto/raw/main/Docs/OSPhoto-logo-no-background.png" width="80px">
+            </div>
+            <div class="column has-text-left">
+                <p class="title ">
+                    Congratulations!
+                </p>
+            </div>
+        </div>
+        <p class="subtitle">
+            OSPhoto is installed and running!
+        </p>
+    </div>
+</section>
+<section>
+    <div class="columns">
+        <div class="column">
+            Importing photo descriptions
+
+            Outline explanation of the steps involved:
+            1. On the Synology NAS, export the photo metadata to a CSV file
+            2. Get that file where OSPhoto can read it
+            3. Start (or restart) OSPhoto
+
+            Step 1:
+
+            Get a root terminal on your existing Synology NAS server, then run the following commands
+            <pre>
+                $ psql -U postgres -d photo -c "COPY (SELECT * FROM photo_image) TO stdout DELIMITER ',' CSV HEADER" > photo_image.csv
+
+                & psql -U postgres -d photo -c "COPY (SELECT * FROM photo_share) TO stdout DELIMITER ',' CSV HEADER" > photo_share.csv
+            </pre>
+
+
+            Step 2:
+
+            Copy the CSV export files on the server where you are running or intend to run OSPhoto
+
+            Put these CSV files in OSPhoto's persistent storage, in a sub-directory called `import`
+            For example, if the docker `-v` volume mapping is:
+            <pre>
+                -v '/path/for/os-photos/metadata':'/AppData':'rw'
+            </pre>
+
+            Then copy the CSV files into
+            <pre>
+                /path/for/os-photo/metadata/import/
+            </pre>
+
+
+            Step 3:
+
+            Start (or restart) OSPhoto.
+            Open the docker logs and you should see information messages showing the progress of importing the photo descriptions.
+
+            Note that OSPhoto will try to do the right thing:
+            - if a description doesn't already exist for the photo, it'll import it
+            - if a description already exists for the photo, it'll check timestamps and use the most recent one (and set the date to today so it isn't updated again)
+
+            When the import completes, the input file is moved to `../imported`
+        </div>
+    </div>
+</section>
+</body>
+</html>

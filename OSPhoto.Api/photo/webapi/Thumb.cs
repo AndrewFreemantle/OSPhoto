@@ -39,8 +39,10 @@ public class Thumb(IAlbumService service) : Endpoint<ThumbRequest>
 
                 break;
             default:
-                Logger.LogError(" > don't know how to handle requested method: {method}"
-                    , req.Method);
+                Logger.LogError(" > don't know how to handle requested method: {method}" +
+                                "\n > query: {query}",
+                    req.Method,
+                    HttpContext.Request.QueryString);
                 await SendNoContentAsync();
                 break;
         }

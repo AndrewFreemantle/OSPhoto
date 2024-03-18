@@ -1,3 +1,4 @@
+using OSPhoto.Api.Extensions;
 using OSPhoto.Common.Interfaces;
 
 namespace OSPhoto.Api.photo.webapi;
@@ -34,8 +35,10 @@ public class Photo(IAlbumService albumService) : Endpoint<PhotoRequest, PhotoRes
                 await SendAsync(new PhotoResponse(photo));
                 break;
             default:
-                Logger.LogError(" > don't know how to handle requested method: {method}"
-                    , req.Method);
+                Logger.LogError(" > don't know how to handle requested method: {method}" +
+                                "\n > body: {body}",
+                    req.Method,
+                    await HttpContext.Request.Body.ReadAsStringAsync());
                 await SendNoContentAsync();
                 break;
         }

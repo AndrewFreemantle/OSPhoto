@@ -1,4 +1,3 @@
-using OSPhoto.Common;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
 
@@ -43,8 +42,10 @@ public class Album(IAlbumService albumService) : Endpoint<AlbumRequest, AlbumRes
                 await SendAsync(new AlbumResponse(albumService, req.Id));
                 break;
             default:
-                Logger.LogError(" > don't know how to handle requested method: {method}"
-                    , req.Method);
+                Logger.LogError(" > don't know how to handle requested method: {method}" +
+                                "\n > body: {body}",
+                    req.Method,
+                    await HttpContext.Request.Body.ReadAsStringAsync());
                 await SendNotFoundAsync();
                 break;
         }

@@ -41,7 +41,7 @@ public abstract class ItemBase
     public string ThumbnailStatus { get; set; }
 
 
-    public string GetIdForPath(string mediaPath, FileSystemInfo fsInfo, string idPrefix)
+    public static string GetIdForPath(string mediaPath, FileSystemInfo fsInfo, string idPrefix)
     {
         var rootDirInfo = new DirectoryInfo(mediaPath.TrimEnd(System.IO.Path.DirectorySeparatorChar));
         var parts = new List<string>();

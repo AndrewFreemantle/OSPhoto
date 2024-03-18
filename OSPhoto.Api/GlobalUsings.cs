@@ -3,4 +3,4 @@
 global using System.Text.Json.Serialization;
 global using FastEndpoints;
 global using OSPhoto.Api.Models;
-global using OSPhoto.Common.Extensions;
+global using OSPhoto.Api.Extensions;
