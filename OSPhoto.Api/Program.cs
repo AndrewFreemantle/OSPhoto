@@ -1,12 +1,9 @@
-using System.Text;
 using FastEndpoints.Swagger;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using NSwag;
 using OSPhoto.Api.Authentication;
-using OSPhoto.Api.Extensions;
 using OSPhoto.Api.Processors;
-using OSPhoto.Common;
 using OSPhoto.Common.Database;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Services;
@@ -31,6 +28,7 @@ string importPath = Environment.GetEnvironmentVariable(IMPORT_PATH)
                     ?? Path.Join(appDataPath, IMPORT_SUB_PATH);
 
 Environment.SetEnvironmentVariable(MEDIA_PATH, mediaPath);
+Environment.SetEnvironmentVariable(APPDATA_PATH, appDataPath);
 Environment.SetEnvironmentVariable(DATABASE_PATH, databasePath);
 Environment.SetEnvironmentVariable(IMPORT_PATH, importPath);
 

@@ -3,8 +3,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Hello Bulma!</title>
+    <title>OS Photo</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <style type="text/css">
+        /* Default hide all content */
+        .tab-content {
+            display: none;
+        }
+        /* Show content of the targeted tab */
+        :target {
+            display: block;
+        }
+    </style>
 </head>
 <body>
 <section class="hero is-success">
@@ -24,7 +34,21 @@
         </p>
     </div>
 </section>
+
 <section>
+    <div class="tabs is-centered">
+        <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#import">Importing Descriptions</a></li>
+        </ul>
+    </div>
+</section>
+
+<section id="home" class="tab-content">
+    <h1>Home section</h1>
+</section>
+
+<section id="import" class="tab-content">
     <div class="columns">
         <div class="column">
             Importing photo descriptions
@@ -40,7 +64,7 @@
             <pre>
                 $ psql -U postgres -d photo -c "COPY (SELECT * FROM photo_image) TO stdout DELIMITER ',' CSV HEADER" > photo_image.csv
 
-                & psql -U postgres -d photo -c "COPY (SELECT * FROM photo_share) TO stdout DELIMITER ',' CSV HEADER" > photo_share.csv
+                $ psql -U postgres -d photo -c "COPY (SELECT * FROM photo_share) TO stdout DELIMITER ',' CSV HEADER" > photo_share.csv
             </pre>
 
 
