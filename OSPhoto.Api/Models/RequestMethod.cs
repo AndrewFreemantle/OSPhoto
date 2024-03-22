@@ -8,4 +8,5 @@ internal record RequestMethod
     internal const string GetInfo = "getinfo";
     internal const string Query = "query";
     internal const string Get = "get";
+    internal const string Edit = "edit";
 }

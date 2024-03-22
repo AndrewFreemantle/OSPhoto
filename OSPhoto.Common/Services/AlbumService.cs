@@ -7,6 +7,7 @@ using OSPhoto.Common.Models;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
 using File = OSPhoto.Common.Models.File;
+using DbPhoto = OSPhoto.Common.Database.Models.Photo;
 
 namespace OSPhoto.Common.Services;
 
@@ -56,6 +57,33 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
     {
         var photoPath = Path.Combine(MediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix));
         return ConvertToItemBase(new FileInfo(photoPath)) as Photo;
+    }
+
+    public async Task EditPhoto(string id, string title, string description)
+    {
+        try
+        {
+            var photo = await dbContext.Photos.FindAsync(id);
+            if (photo == null)
+            {
+                await dbContext.Photos.AddAsync(new DbPhoto(
+                    id,
+                    Path.Combine(MediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix)),
+                    title,
+                    description));
+            }
+            else
+            {
+                photo.Title = title;
+                photo.Description = description;
+            }
+
+            await dbContext.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Exception editing photo metadata for {id}; given {title}, {description}", id, title, description);
+        }
     }
 
     private DirectoryInfo GetContentDirectory(string path = null)
