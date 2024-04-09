@@ -33,8 +33,10 @@ public class Info : Endpoint<InfoRequest, InfoResponse>
                 await SendAsync(new InfoResponse());
                 break;
             default:
-                Logger.LogError(" > don't know how to handle requested method: {method}"
-                    , req.Method);
+                Logger.LogError(" > don't know how to handle requested method: {method}" +
+                                "\n > body: {body}",
+                    req.Method,
+                    await HttpContext.Request.Body.ReadAsStringAsync());
                 await SendNoContentAsync();
                 break;
         }

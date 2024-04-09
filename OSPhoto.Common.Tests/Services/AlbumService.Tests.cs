@@ -1,6 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using NUnit.Framework.Internal;
+using OSPhoto.Common.Database;
 using OSPhoto.Common.Exceptions;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
@@ -28,8 +28,9 @@ public class AlbumServiceTests
         _contentRootPath = currentDirectory.Parent?.Parent?.Parent?.Parent?.FullName ?? string.Empty;
 
         Environment.SetEnvironmentVariable("MEDIA_PATH", Path.Join(_contentRootPath, "Media"));
+
         var logger = new Logger<AlbumService>(new LoggerFactory());
-        _service = new AlbumService(logger);
+        _service = new AlbumService(Utilities.GetInMemoryDbContext(), logger);
     }
 
     [Test]
@@ -37,7 +38,7 @@ public class AlbumServiceTests
     {
         var result = _service.Get();
 
-        Assert.IsNotEmpty(result.Items);
+        Assert.That(result.Items, Is.Not.Empty);
     }
 
     [Test]
@@ -48,7 +49,7 @@ public class AlbumServiceTests
         var directory = rootResult.Items.OfType<Album>().First();
         var directoryResult = _service.Get(directory.Id);
 
-        Assert.AreNotEqual(directoryResult.Items.Count(), rootResult.Items.Count());
+        Assert.That(directoryResult.Items.Count(), Is.Not.EqualTo(rootResult.Items.Count()));
     }
 
     [Test]
@@ -56,8 +57,8 @@ public class AlbumServiceTests
     {
         var result = _service.Get();
 
-        Assert.IsFalse(result.Items.OfType<Photo>().Any(item => item.Name.Contains(".txt")));
-        Assert.IsFalse(result.Items.OfType<Album>().Any(item => item.Name.Contains(".txt")));
+        Assert.That(result.Items.OfType<Photo>().Any(item => item.Name.Contains(".txt")), Is.False);
+        Assert.That(result.Items.OfType<Album>().Any(item => item.Name.Contains(".txt")), Is.False);
     }
 
     [Test]
@@ -65,14 +66,15 @@ public class AlbumServiceTests
     {
         var result = _service.Get();
 
-        Assert.IsTrue(result.Items.First().GetType() == typeof(Album));
-        Assert.IsTrue(result.Items.Last().GetType() == typeof(Photo));
+        Assert.That(result.Items.First().GetType() == typeof(Album));
+        Assert.That(result.Items.Last().GetType() == typeof(Photo));
     }
 
     [Test]
     public void CannotRequestADirectoryOutsideOfRootMedia()
     {
         Assert.Throws<AlbumServiceException>(() => _service.Get("//"));
+        Assert.Throws<AlbumServiceException>(() => _service.Get("../"));
         Assert.Throws<AlbumServiceException>(() => _service.Get("\\"));
     }
 
@@ -82,6 +84,6 @@ public class AlbumServiceTests
         var result = _service.Get();
 
         var image = _service.GetPhoto(result.Items.OfType<Photo>().First().Id);
-        Assert.IsInstanceOf<Photo>(image);
+        Assert.That(image, Is.InstanceOf<Photo>());
     }
 }

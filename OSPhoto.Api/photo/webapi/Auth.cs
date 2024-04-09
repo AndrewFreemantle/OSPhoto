@@ -39,7 +39,7 @@ public class AuthResponseSuccess(string sessionId, string username) : AuthRespon
         [JsonPropertyName("reg_syno_user")]
         public bool RegSynoUser { get; set; } = true;
         [JsonPropertyName("is_admin")]
-        public bool IsAdmin { get; set; } = false;
+        public bool IsAdmin { get; set; } = true;
         [JsonPropertyName("allow_comment")]
         public bool AllowComment { get; set; } = false;
         public Permission Permission { get; set; } = new();
@@ -92,8 +92,10 @@ public class Auth(IUserService userService) : Endpoint<AuthRequest, AuthResponse
                 await SendAsync(new AuthResponse(true));
                 break;
             default:
-                Logger.LogError(" > don't know how to handle requested method: {method}"
-                    , req.Method);
+                Logger.LogError(" > don't know how to handle requested method: {method}" +
+                                "\n > body: {body}",
+                    req.Method,
+                    await HttpContext.Request.Body.ReadAsStringAsync());
                 await SendNoContentAsync();
                 break;
         }

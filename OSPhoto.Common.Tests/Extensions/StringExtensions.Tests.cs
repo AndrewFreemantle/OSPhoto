@@ -10,12 +10,12 @@ public class StringExtensionsTests
         var str = "pexels-andre-furtado-1264210.jpg";
 
         var enc = str.ToHex();
-        Assert.AreNotEqual(enc, str);
-        Assert.IsFalse(enc.Contains('"'));
-        Assert.IsFalse(enc.Contains('\''));
+        Assert.That(enc != str);
+        Assert.That(enc.Contains('"'), Is.False);
+        Assert.That(enc.Contains('\''), Is.False);
 
         var unenc = enc.FromHex();
-        Assert.AreEqual(str, unenc);
+        Assert.That(str, Is.EqualTo(unenc));
     }
 
     [Test]
@@ -24,9 +24,9 @@ public class StringExtensionsTests
         var str = "pexels-tansu-topuzoğlu-7688377.jpg";
 
         var enc = str.ToHex();
-        Assert.AreNotEqual(enc, str);
+        Assert.That(enc, Is.Not.EqualTo(str));
 
         var unenc = enc.FromHex();
-        Assert.AreEqual(unenc, str);
+        Assert.That(unenc, Is.EqualTo(str));
     }
 }

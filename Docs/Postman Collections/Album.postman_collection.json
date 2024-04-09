@@ -1,0 +1,265 @@
+{
+	"info": {
+		"_postman_id": "fe880c50-df85-4eae-99b3-5f0af4f8271e",
+		"name": "Album",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34044583"
+	},
+	"item": [
+		{
+			"name": "list (root)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (!pm.environment.get(\"session_id\")) {",
+							"    console.log('Getting a Session Id...')",
+							"",
+							"    let username = pm.environment.get(\"username\");",
+							"    let password = pm.environment.get(\"password\");",
+							"",
+							"    let formData = {",
+							"        username: username,",
+							"        password: password,",
+							"        api: 'SYNO.PhotoStation.Auth',",
+							"        version: 1,",
+							"        method: 'login'",
+							"    };",
+							"",
+							"    // Step 2: Make a POST request with the form data",
+							"    pm.sendRequest({",
+							"        url: pm.environment.get(\"host\") + \"/auth.php\",",
+							"        method: 'POST',",
+							"        header: 'Content-Type: application/x-www-form-urlencoded',",
+							"        body: {",
+							"            mode: 'urlencoded',",
+							"            urlencoded: Object.keys(formData).map(key => ({key: key, value: formData[key], disabled: false}))",
+							"        }",
+							"    }, (error, response) => {",
+							"        if (error) {",
+							"            console.log(error);",
+							"        } else {",
+							"            let responseData = response.json();",
+							"            ",
+							"            if(responseData.data && responseData.data.sid) {",
+							"                pm.environment.set(\"session_id\", responseData.data.sid);",
+							"                ",
+							"                console.log(\"Session Id saved successfully.\");",
+							"            } else {",
+							"                console.log(\"SID not found in response.\");",
+							"            }",
+							"        }",
+							"    });",
+							"} else {",
+							"    console.log('Already have a Sesison Id, continuing...');",
+							"}",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "method",
+							"value": "list",
+							"type": "text"
+						},
+						{
+							"key": "PHPSESSID",
+							"value": "{{session_id}}",
+							"type": "text"
+						},
+						{
+							"key": "api",
+							"value": "SYNO.PhotoStation.Album",
+							"type": "text"
+						},
+						{
+							"key": "version",
+							"value": "1",
+							"type": "text"
+						},
+						{
+							"key": "offset",
+							"value": "0",
+							"type": "text"
+						},
+						{
+							"key": "sort_by",
+							"value": "preference",
+							"type": "text"
+						},
+						{
+							"key": "sort_direction",
+							"value": "asc",
+							"type": "text"
+						},
+						{
+							"key": "limit",
+							"value": "108",
+							"type": "text"
+						},
+						{
+							"key": "type",
+							"value": "album,photo,video",
+							"type": "text"
+						},
+						{
+							"key": "additional",
+							"value": "album_permission,video_codec,video_quality,thumb_size,photo_exif",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{host}}/album.php",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"album.php"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list - sub-album",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (!pm.environment.get(\"session_id\")) {",
+							"    console.log('Getting a Session Id...')",
+							"",
+							"    let username = pm.environment.get(\"username\");",
+							"    let password = pm.environment.get(\"password\");",
+							"",
+							"    let formData = {",
+							"        username: username,",
+							"        password: password,",
+							"        api: 'SYNO.PhotoStation.Auth',",
+							"        version: 1,",
+							"        method: 'login'",
+							"    };",
+							"",
+							"    // Step 2: Make a POST request with the form data",
+							"    pm.sendRequest({",
+							"        url: pm.environment.get(\"host\") + \"/auth.php\",",
+							"        method: 'POST',",
+							"        header: 'Content-Type: application/x-www-form-urlencoded',",
+							"        body: {",
+							"            mode: 'urlencoded',",
+							"            urlencoded: Object.keys(formData).map(key => ({key: key, value: formData[key], disabled: false}))",
+							"        }",
+							"    }, (error, response) => {",
+							"        if (error) {",
+							"            console.log(error);",
+							"        } else {",
+							"            let responseData = response.json();",
+							"            ",
+							"            if(responseData.data && responseData.data.sid) {",
+							"                pm.environment.set(\"session_id\", responseData.data.sid);",
+							"                ",
+							"                console.log(\"Session Id saved successfully.\");",
+							"            } else {",
+							"                console.log(\"SID not found in response.\");",
+							"            }",
+							"        }",
+							"    });",
+							"} else {",
+							"    console.log('Already have a Sesison Id, continuing...');",
+							"}",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "method",
+							"value": "list",
+							"type": "text"
+						},
+						{
+							"key": "PHPSESSID",
+							"value": "{{session_id}}",
+							"type": "text"
+						},
+						{
+							"key": "api",
+							"value": "SYNO.PhotoStation.Album",
+							"type": "text"
+						},
+						{
+							"key": "version",
+							"value": "1",
+							"type": "text"
+						},
+						{
+							"key": "offset",
+							"value": "0",
+							"type": "text"
+						},
+						{
+							"key": "sort_by",
+							"value": "preference",
+							"type": "text"
+						},
+						{
+							"key": "sort_direction",
+							"value": "asc",
+							"type": "text"
+						},
+						{
+							"key": "limit",
+							"value": "108",
+							"type": "text"
+						},
+						{
+							"key": "type",
+							"value": "album,photo,video",
+							"type": "text"
+						},
+						{
+							"key": "additional",
+							"value": "album_permission,video_codec,video_quality,thumb_size,photo_exif",
+							"type": "text"
+						},
+						{
+							"key": "id",
+							"value": "ALBUM ID GOES HERE",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{host}}/album.php",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"album.php"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

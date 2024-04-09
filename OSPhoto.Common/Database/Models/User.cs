@@ -1,7 +1,4 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace OSPhoto.Common.Models;
+namespace OSPhoto.Common.Database.Models;
 
 [Table("users")]
 public class User

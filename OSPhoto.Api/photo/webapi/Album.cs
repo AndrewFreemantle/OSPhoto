@@ -1,4 +1,3 @@
-using OSPhoto.Common;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
 
@@ -15,6 +14,10 @@ public class AlbumRequest  : RequestBase
     public int Limit { get; set; } = 108;
     public string Additional { get; set; }
     public string Type { get; set; }
+
+    // edit properties
+    public string? Title { get; set; }
+    public string? Description { get; set; }
 }
 
 public class AlbumResponse(IAlbumService albumService, string id)
@@ -23,7 +26,7 @@ public class AlbumResponse(IAlbumService albumService, string id)
     public AlbumResult Data => albumService.Get(id);
 }
 
-public class Album(IAlbumService albumService) : Endpoint<AlbumRequest, AlbumResponse>
+public class Album(IAlbumService service) : Endpoint<AlbumRequest, AlbumResponse>
 {
     public override void Configure()
     {
@@ -40,11 +43,17 @@ public class Album(IAlbumService albumService) : Endpoint<AlbumRequest, AlbumRes
         switch (req.Method)
         {
             case RequestMethod.List:
-                await SendAsync(new AlbumResponse(albumService, req.Id));
+                await SendAsync(new AlbumResponse(service, req.Id));
+                break;
+            case RequestMethod.Edit:
+                await service.Edit(req.Id, req.Title, req.Description);
+                await SendAsync(new AlbumResponse(service, req.Id));
                 break;
             default:
-                Logger.LogError(" > don't know how to handle requested method: {method}"
-                    , req.Method);
+                Logger.LogError(" > don't know how to handle requested method: {method}" +
+                                "\n > body: {body}",
+                    req.Method,
+                    await HttpContext.Request.Body.ReadAsStringAsync());
                 await SendNotFoundAsync();
                 break;
         }

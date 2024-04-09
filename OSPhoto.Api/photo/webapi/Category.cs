@@ -33,8 +33,10 @@ public class Category : Endpoint<CategoryRequest, CategoryResponse>
                 await SendAsync(new CategoryResponse());
                 break;
             default:
-                Logger.LogError(" > don't know how to handle requested method: {method}"
-                    , req.Method);
+                Logger.LogError(" > don't know how to handle requested method: {method}" +
+                                "\n > body: {body}",
+                    req.Method,
+                    await HttpContext.Request.Body.ReadAsStringAsync());
                 await SendNoContentAsync();
                 break;
         }
