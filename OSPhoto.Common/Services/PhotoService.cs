@@ -5,7 +5,6 @@ using OSPhoto.Common.Database;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
 using DbPhoto = OSPhoto.Common.Database.Models.Photo;
-using File = OSPhoto.Common.Models.File;
 
 namespace OSPhoto.Common.Services;
 

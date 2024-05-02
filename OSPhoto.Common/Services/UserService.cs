@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using OSPhoto.Common.Database;
 using OSPhoto.Common.Database.Models;
 using OSPhoto.Common.Interfaces;
-using OSPhoto.Common.Models;
 
 namespace OSPhoto.Common.Services;
 

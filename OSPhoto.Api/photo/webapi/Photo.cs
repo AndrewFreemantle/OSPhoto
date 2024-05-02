@@ -1,6 +1,4 @@
-using OSPhoto.Api.Extensions;
 using OSPhoto.Common.Interfaces;
-using OSPhoto.Common.Services;
 
 namespace OSPhoto.Api.photo.webapi;
 
