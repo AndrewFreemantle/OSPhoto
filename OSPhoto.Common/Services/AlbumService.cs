@@ -7,8 +7,6 @@ using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
-using File = OSPhoto.Common.Models.File;
-using DbPhoto = OSPhoto.Common.Database.Models.Photo;
 
 namespace OSPhoto.Common.Services;
 
@@ -27,7 +25,7 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
             return new AlbumResult(GetContentDirectory(path)
                 .EnumerateFileSystemInfos()
                 .Where(fsi => fsi is DirectoryInfo || ((FileInfo)fsi).IsImageFileType())
-                .Select(ConvertToItemBase)
+                .Select(fsi => ItemBase.ConvertToItemBase(fsi, MediaPath, dbContext))
                 .OrderByDescending(item => item.GetType() == typeof(Album))
                 .ThenBy(item => item.Name), path, MediaPath);
         }
@@ -125,39 +123,6 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
         }
     }
 
-    public Photo GetPhoto(string id)
-    {
-        var photoPath = Path.Combine(MediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix));
-        return ConvertToItemBase(new FileInfo(photoPath)) as Photo;
-    }
-
-    public async Task EditPhoto(string id, string title, string description)
-    {
-        try
-        {
-            var photo = await dbContext.Photos.FindAsync(id);
-            if (photo == null)
-            {
-                await dbContext.Photos.AddAsync(new DbPhoto(
-                    id,
-                    Path.Combine(MediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix)),
-                    title,
-                    description));
-            }
-            else
-            {
-                photo.Title = title;
-                photo.Description = description;
-            }
-
-            await dbContext.SaveChangesAsync();
-        }
-        catch (Exception e)
-        {
-            logger.LogError(e, "Exception editing photo metadata for {id}; given {title}, {description}", id, title, description);
-        }
-    }
-
     private DirectoryInfo GetContentDirectory(string path = null)
     {
         return new DirectoryInfo(
@@ -165,19 +130,5 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
             || string.IsNullOrWhiteSpace(path)
                 ? MediaPath
                 : Path.Combine(MediaPath, path));
-    }
-
-    private ItemBase ConvertToItemBase(FileSystemInfo fsInfo)
-    {
-        var itemPath = fsInfo.FullName.Substring(MediaPath.Length);
-
-        if (fsInfo is DirectoryInfo directoryInfo)
-            return new Album(MediaPath, directoryInfo, dbContext);
-
-        if (fsInfo is FileInfo fileInfo && fileInfo.IsImageFileType())
-            return new Photo(MediaPath, fileInfo, dbContext);
-
-        // shouldn't occur, but handle it anyway...
-        return new File(fsInfo.Name, itemPath);
     }
 }

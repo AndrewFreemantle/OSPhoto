@@ -77,13 +77,4 @@ public class AlbumServiceTests
         Assert.Throws<AlbumServiceException>(() => _service.Get("../"));
         Assert.Throws<AlbumServiceException>(() => _service.Get("\\"));
     }
-
-    [Test]
-    public void CanGetPhoto()
-    {
-        var result = _service.Get();
-
-        var image = _service.GetPhoto(result.Items.OfType<Photo>().First().Id);
-        Assert.That(image, Is.InstanceOf<Photo>());
-    }
 }

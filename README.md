@@ -26,7 +26,7 @@ docker run \
   --net='bridge' \
   -e 'USERS'='SomeUser=TheirPassword;SomeOtherUser=AndTheirPassword' \
   -p '5000:5000/tcp' \
-  -v '/path/to/a/photo-collection/':'/Media':'ro' \
+  -v '/path/to/a/photo-collection/':'/Media':'rw' \
   -v '/path/to/some/persistent/location/for/os-photos/metadata':'/AppData':'rw' \
   'andrewfreemantle/os-photo'
 ```
@@ -44,7 +44,8 @@ There are a few reasons for this project, the main one being that Synology's Pho
 - [x] Docker installable with a read-only volume of photos
 - [x] Import descriptions, titles and metadata from Synology's PhotoStation
 - [ ] [HEIC/HEIF](https://en.wikipedia.org/wiki/High_Efficiency_Image_File_Format) photo file support
-- [ ] Photo uploads and album management (via apps)
+- [x] Photo uploads, move and delete (via apps)
+- [ ] Album management (via apps)
 - [ ] Tags and comments (importable from Photo Station)
 - [ ] Basic web browser interface: folders as albums, navigation, etc
 - [ ] Web interface administration (uploads, tagging, user accounts, etc)

@@ -15,7 +15,16 @@ public class CatchAllEndpoint : EndpointWithoutRequest
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var body = await HttpContext.Request.Body.ReadAsStringAsync();
+        var body = string.Empty;
+        try
+        {
+            body = await HttpContext.Request.Body.ReadAsStringAsync();
+        }
+        catch (Exception e)
+        {
+           body = "[NOT A STRING]";
+        }
+
         var headers = string.Join(' ', HttpContext.Request.Headers.Select(h => $"\n\t{h.Key} = {h.Value.ToString()}"));
         var cookies = string.Join(' ', HttpContext.Request.Cookies.Select(c => $"\n\t{c.Key} = {c.Value}"));
 

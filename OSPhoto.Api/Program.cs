@@ -63,7 +63,8 @@ builder.Services.SwaggerDocument(o =>
 builder.Services
     .AddScoped<IImportService, ImportService>()
     .AddScoped<IUserService, UserService>()
-    .AddScoped<IAlbumService, AlbumService>();
+    .AddScoped<IAlbumService, AlbumService>()
+    .AddScoped<IPhotoService, PhotoService>();
 
 var app = builder.Build();
 

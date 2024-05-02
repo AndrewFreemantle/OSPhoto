@@ -45,10 +45,23 @@ public sealed class SessionAuth : AuthenticationHandler<AuthenticationSchemeOpti
 
     private async Task<string> GetSessionIdFromRequestAsync()
     {
+        // try query-string first
         var sessionId = Context.Request.Query.ContainsKey(SessionPropertyName)
             ? Context.Request.Query[SessionPropertyName].ToString()
             : string.Empty;
 
+        if (!string.IsNullOrEmpty(sessionId))
+            return sessionId;
+
+        // try cookies
+        sessionId = Context.Request.Cookies.ContainsKey(SessionPropertyName)
+            ? Context.Request.Cookies[SessionPropertyName]
+            : string.Empty;
+
+        if (!string.IsNullOrEmpty(sessionId))
+            return sessionId;
+
+        // finally try the request body
         if (sessionId == string.Empty)
         {
             try
@@ -83,7 +96,7 @@ public sealed class SessionAuth : AuthenticationHandler<AuthenticationSchemeOpti
         else
             Logger.Log(LogLevel.Information, "Found SessionId in Query Parameters");
 
-        return await Task.FromResult(sessionId);
+        return sessionId;
     }
 
     private async Task<AuthenticationTicket> CreateAuthTicketAsync(string sessionId)

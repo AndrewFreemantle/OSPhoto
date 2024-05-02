@@ -1,3 +1,4 @@
+using OSPhoto.Common.Database;
 using OSPhoto.Common.Extensions;
 
 namespace OSPhoto.Common.Models;
@@ -75,6 +76,20 @@ public abstract class ItemBase
             .ToArray();
 
         return System.IO.Path.Combine(parts);
+    }
+
+    public static ItemBase ConvertToItemBase(FileSystemInfo fsInfo, string mediaPath, ApplicationDbContext dbContext)
+    {
+        var itemPath = fsInfo.FullName.Substring(mediaPath.Length);
+
+        if (fsInfo is DirectoryInfo directoryInfo)
+            return new Album(mediaPath, directoryInfo, dbContext);
+
+        if (fsInfo is FileInfo fileInfo && fileInfo.IsImageFileType())
+            return new Photo(mediaPath, fileInfo, dbContext);
+
+        // shouldn't occur, but handle it anyway...
+        return new File(fsInfo.Name, itemPath);
     }
 
 
