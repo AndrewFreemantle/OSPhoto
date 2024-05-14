@@ -15,7 +15,7 @@
         <PackageReference Include="FastEndpoints" Version="5.25.0" />
         <PackageReference Include="FastEndpoints.Swagger" Version="5.25.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.1" />
     </ItemGroup>
 
     <ItemGroup>
