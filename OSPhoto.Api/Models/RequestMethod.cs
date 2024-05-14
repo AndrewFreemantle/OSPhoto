@@ -13,4 +13,5 @@ internal record RequestMethod
     internal const string UploadPhoto = "uploadphoto";
     internal const string Delete = "delete";
     internal const string Copy = "copy";
+    internal const string Create = "create";
 }

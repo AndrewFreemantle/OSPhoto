@@ -15,15 +15,23 @@ public class AlbumRequest  : RequestBase
     public string Additional { get; set; }
     public string Type { get; set; }
 
+    // create properties
+    public string Name { get; set; }
+    public bool InheritParent { get; set; }
+
     // edit properties
     public string? Title { get; set; }
     public string? Description { get; set; }
 }
 
-public class AlbumResponse(IAlbumService albumService, string id)
+public class AlbumResponseWithResult(IAlbumService albumService, string id, bool success = true) : AlbumResponse
 {
-    public bool Success { get; set; } = true;
     public AlbumResult Data => albumService.Get(id);
+}
+
+public class AlbumResponse(bool success = true)
+{
+    public bool Success => success;
 }
 
 public class Album(IAlbumService service) : Endpoint<AlbumRequest, AlbumResponse>
@@ -43,11 +51,19 @@ public class Album(IAlbumService service) : Endpoint<AlbumRequest, AlbumResponse
         switch (req.Method)
         {
             case RequestMethod.List:
-                await SendAsync(new AlbumResponse(service, req.Id));
+                await SendAsync(new AlbumResponseWithResult(service, req.Id));
+                break;
+            case RequestMethod.Create:
+                await service.Create(req.Id, req.Name);
+                await SendAsync(new AlbumResponseWithResult(service, req.Id));
                 break;
             case RequestMethod.Edit:
                 await service.Edit(req.Id, req.Title, req.Description);
-                await SendAsync(new AlbumResponse(service, req.Id));
+                await SendAsync(new AlbumResponseWithResult(service, req.Id));
+                break;
+            case RequestMethod.Delete:
+                var deleteResult = await service.Delete(req.Id);
+                await SendAsync(new AlbumResponse(deleteResult));
                 break;
             default:
                 Logger.LogError(" > don't know how to handle requested method: {method}" +

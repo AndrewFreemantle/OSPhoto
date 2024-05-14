@@ -7,6 +7,7 @@ using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
+using Exception = System.Exception;
 
 namespace OSPhoto.Common.Services;
 
@@ -20,7 +21,7 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
         {
             var path = string.IsNullOrEmpty(id)
                 ? MediaPath
-                : Path.Combine(MediaPath, id[Album.IdPrefix.Length..].FromHex());
+                : Path.Join(MediaPath, ItemBase.GetPathFromId(id, Album.IdPrefix));
 
             return new AlbumResult(GetContentDirectory(path)
                 .EnumerateFileSystemInfos()
@@ -29,11 +30,31 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
                 .OrderByDescending(item => item.GetType() == typeof(Album))
                 .ThenBy(item => item.Name), path, MediaPath);
         }
-        catch (Exception ex)
+        catch (Exception e)
         {
-            logger.LogError(ex, "Exception getting album (directory) contents for {id}", id);
-            throw new AlbumServiceException(id, ex.Message, ex);
+            logger.LogError(e, "Exception getting album (directory) contents for {id}", id);
+            throw new AlbumServiceException(id, e.Message, e);
         }
+    }
+
+    public Task Create(string parentAlbumId, string albumName)
+    {
+        try
+        {
+            var parentPath = string.IsNullOrEmpty(parentAlbumId)
+                ? MediaPath
+                : Path.Join(MediaPath, ItemBase.GetPathFromId(parentAlbumId, Album.IdPrefix));
+
+            Directory.CreateDirectory(Path.Join(parentPath, albumName));
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error creating new album '{name}' (in id: {parentAlbumId})"
+                , albumName,
+                parentAlbumId);
+        }
+
+        return Task.CompletedTask;
     }
 
     public async Task<Stream> GetThumbnail(string id)
@@ -67,13 +88,13 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
         }
     }
 
-    public async Task<bool> SetCoverPhoto(string albumId, string photoId)
+    public async Task<bool> SetCoverPhoto(string id, string photoId)
     {
         try
         {
-            var albumRecord = await dbContext.Albums.FindAsync(albumId);
+            var albumRecord = await dbContext.Albums.FindAsync(id);
             if (albumRecord == null)
-                await dbContext.Albums.AddAsync(new Database.Models.Album(albumId, ItemBase.GetPathFromId(albumId, Album.IdPrefix), null, null, photoId));
+                await dbContext.Albums.AddAsync(new Database.Models.Album(id, ItemBase.GetPathFromId(id, Album.IdPrefix), null, null, photoId));
             else
             {
                 albumRecord.CoverPhotoId = photoId;
@@ -87,20 +108,20 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
         catch (Exception e)
         {
             logger.LogError(e, "Exception setting album cover photo. Album: {albumId}, Photo: {photoId}",
-                albumId,
+                id,
                 photoId);
 
             return false;
         }
     }
 
-    public async Task<bool> Edit(string albumId, string? title, string? description)
+    public async Task<bool> Edit(string id, string? title, string? description)
     {
         try
         {
-            var albumRecord = await dbContext.Albums.FindAsync(albumId);
+            var albumRecord = await dbContext.Albums.FindAsync(id);
             if (albumRecord == null)
-                await dbContext.Albums.AddAsync(new Database.Models.Album(albumId, ItemBase.GetPathFromId(albumId, Album.IdPrefix), title, description));
+                await dbContext.Albums.AddAsync(new Database.Models.Album(id, ItemBase.GetPathFromId(id, Album.IdPrefix), title, description));
             else
             {
                 albumRecord.Title = title;
@@ -115,12 +136,50 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
         catch (Exception e)
         {
             logger.LogError(e, "Exception editing Album info. Album: {albumId} (title: {title}; desc: {description}",
-                albumId,
+                id,
                 title,
                 description);
 
             return false;
         }
+    }
+
+    public async Task<bool> Delete(string id)
+    {
+        var albumPath = string.IsNullOrEmpty(id)
+            ? MediaPath
+            : Path.Join(MediaPath, ItemBase.GetPathFromId(id, Album.IdPrefix));
+
+        // shouldn't be possible to select or delete the MediaPath root, but prevent it happening anyway
+        if (albumPath == MediaPath)
+            return false;
+
+        try
+        {
+            Directory.Delete(albumPath, true);
+
+            var albumMetadataDeleted = await dbContext.Albums
+                .Where(a => a.Path.StartsWith(albumPath))
+                .ExecuteDeleteAsync();
+
+            var photoMetadataDeleted = await dbContext.Photos
+                .Where(p => p.Path.StartsWith(albumPath))
+                .ExecuteDeleteAsync();
+
+            await dbContext.SaveChangesAsync();
+
+            logger.LogInformation("Deleted album '{albumPath}', {albumMetadataCount} album & {photoMetadataCount} photo metadata records",
+                albumPath,
+                albumMetadataDeleted,
+                photoMetadataDeleted);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error deleting album id: {id}", id);
+            return false;
+        }
+
+        return true;
     }
 
     private DirectoryInfo GetContentDirectory(string path = null)
