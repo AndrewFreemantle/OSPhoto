@@ -1,6 +1,8 @@
 using FastEndpoints.Swagger;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using NSwag;
 using OSPhoto.Api.Authentication;
 using OSPhoto.Api.Processors;
@@ -41,6 +43,12 @@ builder.Services
     .AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlite($"Data Source={databasePath};Version=3")
     )
+    .AddHangfire(configuration => configuration
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UseInMemoryStorage())
+    .AddHangfireServer()
     .AddAuthorization()
     .AddAuthentication(SessionAuth.SchemeName)
     .AddScheme<AuthenticationSchemeOptions, SessionAuth>(SessionAuth.SchemeName, null);
@@ -64,7 +72,8 @@ builder.Services
     .AddScoped<IImportService, ImportService>()
     .AddScoped<IUserService, UserService>()
     .AddScoped<IAlbumService, AlbumService>()
-    .AddScoped<IPhotoService, PhotoService>();
+    .AddScoped<IPhotoService, PhotoService>()
+    .AddScoped<IStatsService, StatsService>();
 
 var app = builder.Build();
 
@@ -97,8 +106,9 @@ app.Lifetime.ApplicationStarted.Register(async () =>
         dbContext.SeedUsers(Environment.GetEnvironmentVariable("USERS"));
 
         // Check for data to import...
+        var backgroundJobs = scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>();
         var importService = scope.ServiceProvider.GetRequiredService<IImportService>();
-        await importService.RunAsync();
+        backgroundJobs.Enqueue(() => importService.RunAsync());
     }
 });
 

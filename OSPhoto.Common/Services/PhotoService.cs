@@ -18,7 +18,7 @@ public class PhotoService(ApplicationDbContext dbContext, ILogger<PhotoService> 
         return ItemBase.ConvertToItemBase(new FileInfo(photoPath), MediaPath, dbContext) as Photo;
     }
 
-    public async Task EditInfo(string id, string title, string description)
+    public async Task EditInfo(string id, string title, string description, int? importedShareId = null)
     {
         try
         {
@@ -29,12 +29,15 @@ public class PhotoService(ApplicationDbContext dbContext, ILogger<PhotoService> 
                     id,
                     Path.Combine(MediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix)),
                     title,
-                    description));
+                    description,
+                    importedShareId));
             }
             else
             {
                 photo.Title = title;
                 photo.Description = description;
+                photo.ImportedShareId = importedShareId;
+                photo.UpdatedDate = DateTime.UtcNow;
             }
 
             await dbContext.SaveChangesAsync();

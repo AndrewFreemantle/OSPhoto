@@ -45,7 +45,7 @@ There are a few reasons for this project, the main one being that Synology's Pho
 - [x] Import descriptions, titles and metadata from Synology's PhotoStation
 - [ ] [HEIC/HEIF](https://en.wikipedia.org/wiki/High_Efficiency_Image_File_Format) photo file support
 - [x] Photo uploads, move and delete (via apps)
-- [ ] Album management (via apps)
+- [x] Album management (via apps)
 - [ ] Tags and comments (importable from Photo Station)
 - [ ] Basic web browser interface: folders as albums, navigation, etc
 - [ ] Web interface administration (uploads, tagging, user accounts, etc)

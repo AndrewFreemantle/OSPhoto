@@ -15,9 +15,10 @@ using Album = OSPhoto.Common.Models.Album;
 
 namespace OSPhoto.Common.Services;
 
-public class ImportService(ApplicationDbContext dbContext, ILogger<ImportService> logger) : IImportService
+public class ImportService(IPhotoService photoService, IAlbumService albumService, ApplicationDbContext dbContext, ILogger<ImportService> logger) : IImportService
 {
     private string _synoSharePathPrefix = Environment.GetEnvironmentVariable("SYNO_SHARE_PATH_PREFIX") ?? "/volume1/photo/";
+    private string _mediaPath = Environment.GetEnvironmentVariable("MEDIA_PATH");
 
     private readonly string _importPath = Environment.GetEnvironmentVariable("IMPORT_PATH");
 
@@ -26,6 +27,8 @@ public class ImportService(ApplicationDbContext dbContext, ILogger<ImportService
 
     public async Task RunAsync()
     {
+        logger.LogInformation("Starting...");
+
         if (!Directory.Exists(_importPath) || !Directory.GetFiles(_importPath).Any())
         {
             logger.LogInformation(@"Import directory doesn't exist or is empty, no photo descriptions to import.
@@ -36,17 +39,36 @@ Looked in: {importPath}", _importPath);
         var files = Directory.GetFiles(_importPath);
         var photoImageFilename = files.FirstOrDefault(fn => fn.Contains("photo_image"));
         if (!string.IsNullOrEmpty(photoImageFilename))
+        {
+            // we have photo metadata to import...
             if (await ImportPhotoImage(photoImageFilename))
                 MoveImportFile(photoImageFilename, _importPathSuccess);
             else
                 MoveImportFile(photoImageFilename, _importPathFailed);
+        }
+        else
+        {
+            // no photo metadata to import, but check if any we have for missing files now match...
+            await CheckPhotoImagesFileNotFound();
+        }
 
         var photoShareFilename = files.FirstOrDefault(fn => fn.Contains("photo_share"));
         if (!string.IsNullOrEmpty(photoShareFilename))
+        {
+            // we have photo share/album metadata to import...
             if (await ImportPhotoShare(photoShareFilename))
                 MoveImportFile(photoShareFilename, _importPathSuccess);
             else
                 MoveImportFile(photoShareFilename, _importPathFailed);
+        }
+        else
+        {
+            // no photo share/album metadata to import, but check if any we have for missing albums now match...
+            await CheckAlbumsDirNotFound();
+        }
+
+
+        logger.LogInformation("Finished.");
     }
 
     private void MoveImportFile(string importFilename, string destination)
@@ -80,8 +102,6 @@ Looked in: {importPath}", _importPath);
     {
         logger.LogInformation("Starting import of: {file}", csvFilename);
 
-        var mediaPath = Environment.GetEnvironmentVariable("MEDIA_PATH");
-
         var recordsImported = 0;
         var recordsNotFound = 0;
 
@@ -105,13 +125,13 @@ Looked in: {importPath}", _importPath);
                         // trim the start of the path to match our config
                         var recordPath = record.Path;
                         if (recordPath.StartsWith(_synoSharePathPrefix))
-                            recordPath = Path.Join(mediaPath, recordPath.Substring(_synoSharePathPrefix.Length));
+                            recordPath = Path.Join(_mediaPath, recordPath.Substring(_synoSharePathPrefix.Length));
 
                         if (File.Exists(recordPath))
                         {
                             var fsInfo = new FileInfo(recordPath);
                             record.Title ??= fsInfo.Name;
-                            if (await Import(ItemBase.GetIdForPath(mediaPath, fsInfo, Photo.IdPrefix), record))
+                            if (await Import(ItemBase.GetIdForPath(_mediaPath, fsInfo, Photo.IdPrefix), record))
                                 recordsImported++;
                         }
                         else
@@ -183,14 +203,60 @@ Looked in: {importPath}", _importPath);
     }
 
     /// <summary>
+    /// Checks each record in the photo metadata database against the file system to see if there's now a matching file
+    /// (this could be because we'd imported photo image metadata, but were still copying over the photo files)
+    /// </summary>
+    private async Task CheckPhotoImagesFileNotFound()
+    {
+        if (!await dbContext.PhotosFileNotFound.AnyAsync())
+            return;
+
+        try
+        {
+            for (int i = dbContext.PhotosFileNotFound.Count() - 1; i >= 0; i--)
+            {
+                try
+                {
+                    var record = await dbContext.PhotosFileNotFound.ElementAtAsync(i);
+
+                    var recordPath = record.Path;
+                    if (recordPath.StartsWith(_synoSharePathPrefix))
+                        recordPath = Path.Join(_mediaPath, recordPath.Substring(_synoSharePathPrefix.Length));
+
+                    if (File.Exists(recordPath))
+                    {
+                        using (var trans = await dbContext.Database.BeginTransactionAsync())
+                        {
+                            var fsInfo = new FileInfo(recordPath);
+                            var id = ItemBase.GetIdForPath(_mediaPath, fsInfo, Photo.IdPrefix);
+                            await photoService.EditInfo(id, record.Title ?? fsInfo.Name, record.Description ?? string.Empty,
+                                record.ShareId);
+
+                            dbContext.PhotosFileNotFound.Remove(record);
+
+                            await dbContext.SaveChangesAsync();
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    // exception doesn't matter here as this record can be retried
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error checking photos not found metadata against the filesystem");
+        }
+    }
+
+    /// <summary>
     /// Imports records exported from the `photo_share` database table into OSPhoto
     /// </summary>
     /// <param name="csvFilename"></param>
     private async Task<bool> ImportPhotoShare(string csvFilename)
     {
         logger.LogInformation("Starting import of: {file}", csvFilename);
-
-        var mediaPath = Environment.GetEnvironmentVariable("MEDIA_PATH");
 
         var recordsImported = 0;
         var recordsNotFound = 0;
@@ -210,13 +276,15 @@ Looked in: {importPath}", _importPath);
                         var record = csv.GetRecord<CsvPhotoShareRecord>();
 
                         // the sharename isn't the full path
-                        var recordPath = Path.Join(mediaPath, record.ShareName);
+                        var recordPath = Path.Join(_mediaPath, record.ShareName);
 
                         if (Directory.Exists(recordPath))
                         {
                             var dirInfo = new DirectoryInfo(recordPath);
-                            record.Title ??= dirInfo.Name;
-                            if (await Import(ItemBase.GetIdForPath(mediaPath, dirInfo, Album.IdPrefix), record))
+                            if (string.IsNullOrEmpty(record.Title))
+                                record.Title = dirInfo.Name;
+
+                            if (await Import(ItemBase.GetIdForPath(_mediaPath, dirInfo, Album.IdPrefix), record))
                                 recordsImported++;
                         }
                         else
@@ -256,23 +324,15 @@ Looked in: {importPath}", _importPath);
         var album = await dbContext.Albums.FindAsync(id);
         if (album != null) return false;
 
-        // find the photo for this album's cover
+        // find the photo for this album's cover, if there is one
         var coverPhoto = await dbContext.Photos.FirstOrDefaultAsync(p => p.ImportedShareId == record.Id);
-        if (coverPhoto == null)
-        {
-            logger.LogDebug(" > Can't find photo image for album/shareid: {shareid} ({shareName})",
-                record.Id,
-                record.ShareName);
-
-            return false;
-        }
 
         await dbContext.Albums.AddAsync(new DbAlbum(
             id,
-            record.ShareName,
+            Path.Join(_mediaPath, record.ShareName),
             record.Title!,
             record.Description!,
-            coverPhoto.Id));
+            coverPhoto?.Id));
 
         return true;
     }
@@ -285,5 +345,56 @@ Looked in: {importPath}", _importPath);
         await dbContext.AlbumsDirNotFound.AddAsync(new AlbumDirNotFound(record, csvFilename));
 
         return true;
+    }
+
+    /// <summary>
+    /// Checks each record in the album metadata database against the file system to see if there's now a matching album directory
+    /// (this could be because we'd imported album share metadata, but were still copying over the albums/directories)
+    /// </summary>
+    private async Task CheckAlbumsDirNotFound()
+    {
+        if (!await dbContext.AlbumsDirNotFound.AnyAsync())
+            return;
+
+        try
+        {
+            for (int i = dbContext.AlbumsDirNotFound.Count() - 1; i >= 0; i--)
+            {
+                try
+                {
+                    var record = await dbContext.AlbumsDirNotFound.ElementAtAsync(i);
+
+                    // the sharename isn't the full path
+                    var recordPath = Path.Join(_mediaPath, record.ShareName);
+
+                    if (Directory.Exists(recordPath))
+                    {
+                        using (var trans = await dbContext.Database.BeginTransactionAsync())
+                        {
+
+                            var dirInfo = new DirectoryInfo(recordPath);
+                            var id = ItemBase.GetIdForPath(_mediaPath, dirInfo, Photo.IdPrefix);
+
+                            // find the photo for this album's cover, if there is one
+                            var coverPhoto = await dbContext.Photos.FirstOrDefaultAsync(p => p.ImportedShareId == record.Id);
+
+                            await albumService.Edit(id, record.Title ?? dirInfo.Name, record.Description, coverPhoto?.Id);
+
+                            dbContext.AlbumsDirNotFound.Remove(record);
+
+                            await dbContext.SaveChangesAsync();
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    // exception doesn't matter here as this record can be retried
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error checking albums not found metadata against the filesystem");
+        }
     }
 }
