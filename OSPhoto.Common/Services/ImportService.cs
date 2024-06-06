@@ -131,7 +131,7 @@ Looked in: {importPath}", _importPath);
                         {
                             var fsInfo = new FileInfo(recordPath);
                             record.Title ??= fsInfo.Name;
-                            if (await Import(ItemBase.GetIdForPath(_mediaPath, fsInfo, Photo.IdPrefix), record))
+                            if (await Import(ItemBase.GetIdForPath(_mediaPath, fsInfo, Photo.IdPrefix), recordPath, record))
                                 recordsImported++;
                         }
                         else
@@ -177,14 +177,14 @@ Looked in: {importPath}", _importPath);
                && !string.IsNullOrWhiteSpace(record.Description);
     }
 
-    private async Task<bool> Import(string id, CsvPhotoImageRecord record)
+    private async Task<bool> Import(string id, string recordPath, CsvPhotoImageRecord record)
     {
         var photo = await dbContext.Photos.FindAsync(id);
         if (photo != null) return false;
 
         await dbContext.Photos.AddAsync(new DbPhoto(
             id,
-            record.Path,
+            recordPath,
             record.Title!,
             record.Description!,
             record.ShareId));
