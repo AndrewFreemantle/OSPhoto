@@ -18,6 +18,11 @@ public class Album : ItemBase
 
         Info = new ItemInfo(Name, Name, albumRecord?.Title, albumRecord?.Description);
         Additional = new ItemAdditional();
-        ThumbnailStatus = (albumRecord != null && !string.IsNullOrEmpty(albumRecord.CoverPhotoId)) ? "small,large" : "default";
+
+        // do we have a specific album thumbnail?
+        ThumbnailStatus = (
+            (albumRecord != null && !string.IsNullOrEmpty(albumRecord.CoverPhotoId))    // user specified album cover exists
+            || dirInfo.EnumerateFiles().Any(f => f.IsImageFileType())            // album dir contains at least one image
+            ) ? "small,large" : "default";
     }
 }

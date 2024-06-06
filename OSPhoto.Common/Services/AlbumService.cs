@@ -59,6 +59,8 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
 
     public async Task<Stream> GetThumbnail(string id)
     {
+        string? imagePath = null;
+
         // is this an album thumbnail request?
         if (id.StartsWith(Album.IdPrefix))
         {
@@ -69,15 +71,29 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
             }
             else
             {
-                logger.LogWarning("GetThumbnail: No cover photo id found for album: {albumId}", id);
-                throw new ArgumentException("No cover photo set for album");
+                // return the photo id of the last image file within the album/directory
+                var albumPath = Path.Join(_mediaPath, ItemBase.GetPathFromId(id, Album.IdPrefix));
+                var dirInfo = new DirectoryInfo(albumPath);
+
+                var lastImageFileInfo = dirInfo
+                    .EnumerateFiles()
+                    .Where(fi => fi.IsImageFileType())
+                    .MaxBy(fi => fi.Name);
+
+                if (lastImageFileInfo != null)
+                    imagePath = lastImageFileInfo.FullName;
+                else
+                {
+                    logger.LogWarning("GetThumbnail: No cover photo id found or images contained in album: {albumId}", id);
+                    throw new ArgumentException("No cover photo set or images contained in album");
+                }
             }
         }
 
         // grab the file, then return a resized version
         var memoryStream = new MemoryStream();
 
-        var imagePath = Path.Combine(_mediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix));
+        imagePath ??= Path.Combine(_mediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix));
 
         using (var image = SixLabors.ImageSharp.Image.Load(imagePath))
         {
