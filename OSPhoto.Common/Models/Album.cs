@@ -10,13 +10,14 @@ public class Album : ItemBase
 
     public Album(string mediaPath, DirectoryInfo dirInfo, ApplicationDbContext dbContext) : base(dirInfo)
     {
-        Id = $"{IdPrefix}{dirInfo.FullName[mediaPath.Length..].TrimStart(System.IO.Path.DirectorySeparatorChar).ToHex()}";
+        var sharePath = dirInfo.FullName[mediaPath.Length..].TrimStart(System.IO.Path.DirectorySeparatorChar);
+        Id = $"{IdPrefix}{sharePath.ToHex()}";
         Type = "album";
 
         // do we have metadata and/or a cover photo for this album/directory?
         var albumRecord = dbContext.Albums.FirstOrDefault(a => a.Id == Id);
 
-        Info = new ItemInfo(Name, Name, albumRecord?.Title, albumRecord?.Description);
+        Info = new ItemInfo(sharePath, Name, albumRecord?.Title, albumRecord?.Description);
         Additional = new ItemAdditional();
 
         // do we have a specific album thumbnail?
