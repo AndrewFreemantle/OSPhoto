@@ -1,14 +1,16 @@
 using FastEndpoints.Swagger;
 using Hangfire;
+using HeyRed.ImageSharp.Heif;
+using HeyRed.ImageSharp.Heif.Formats.Heif;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using NSwag;
 using OSPhoto.Api.Authentication;
 using OSPhoto.Api.Processors;
 using OSPhoto.Common.Database;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Services;
+using SixLabors.ImageSharp;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -110,6 +112,12 @@ app.Lifetime.ApplicationStarted.Register(async () =>
         var importService = scope.ServiceProvider.GetRequiredService<IImportService>();
         backgroundJobs.Enqueue(() => importService.RunAsync());
     }
+
+    // Register HEIF image support globally
+    Configuration.Default.ImageFormatsManager.AddImageFormat(HeifFormat.Instance);
+    Configuration.Default.ImageFormatsManager.AddImageFormatDetector(new HeifImageFormatDetector());
+    Configuration.Default.ImageFormatsManager.SetDecoder(HeifFormat.Instance, HeifDecoder.Instance);
+    Configuration.Default.ImageFormatsManager.SetEncoder(HeifFormat.Instance, new HeifEncoder());
 });
 
 app.Run();

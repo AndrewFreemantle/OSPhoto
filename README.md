@@ -43,7 +43,7 @@ There are a few reasons for this project, the main one being that Synology's Pho
 - [x] Basic DS photo app support (login, browse) - [API ref](https://github.com/jamesbo13/syno-photostation-api)
 - [x] Docker installable with a read-only volume of photos
 - [x] Import descriptions, titles and metadata from Synology's PhotoStation
-- [ ] [HEIC/HEIF](https://en.wikipedia.org/wiki/High_Efficiency_Image_File_Format) photo file support
+- [x] [HEIC/HEIF](https://en.wikipedia.org/wiki/High_Efficiency_Image_File_Format) photo file support
 - [x] Photo uploads, move and delete (via apps)
 - [x] Album management (via apps)
 - [ ] Tags and comments (importable from Photo Station)

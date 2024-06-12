@@ -4,7 +4,7 @@ namespace OSPhoto.Common.Extensions;
 
 public static class FileSystemInfoExtensions
 {
-    private static readonly string[] NonImageFileExtensions = new[] { ".DS_Store" };
+    private static readonly string[] NonImageFileExtensions = { ".DS_Store" };
 
     public static bool IsImageFileType(this FileSystemInfo fsInfo)
     {
@@ -12,10 +12,10 @@ public static class FileSystemInfoExtensions
 
         try
         {
-            var imageFormat = SixLabors.ImageSharp.Image.DetectFormat(fsInfo.FullName);
+            var imageFormat = Image.DetectFormat(fsInfo.FullName);
             return imageFormat != null;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return false;
         }
