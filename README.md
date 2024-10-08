@@ -46,6 +46,7 @@ There are a few reasons for this project, the main one being that Synology's Pho
 - [x] [HEIC/HEIF](https://en.wikipedia.org/wiki/High_Efficiency_Image_File_Format) photo file support
 - [x] Photo uploads, move and delete (via apps)
 - [x] Album management (via apps)
+- [ ] Video uploads, thumbnails, preview/play, edit (title & description), move and delete (via apps)
 - [ ] Tags and comments (importable from Photo Station)
 - [ ] Basic web browser interface: folders as albums, navigation, etc
 - [ ] Web interface administration (uploads, tagging, user accounts, etc)
@@ -55,5 +56,6 @@ There are a few reasons for this project, the main one being that Synology's Pho
 
 Any help is very welcome!
 
-- [x] [Raise an issue](https://github.com/AndrewFreemantle/OSPhoto/issues) to request a feature or report a bug
-- [x] Fellow developers can pick up any issue (please see `CONTRIBUTING.md` for some guidance)
+- 💬 [Raise an issue](https://github.com/AndrewFreemantle/OSPhoto/issues) to request a feature or report a bug
+- 🥤 Support the development by [buying me a coffee](https://www.buymeacoffee.com/fatlemon)
+- 👨‍💻 Fellow developers can pick up any issue (please see `CONTRIBUTING.md` for some guidance)

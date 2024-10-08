@@ -1,19 +1,21 @@
-using Microsoft.AspNetCore.Mvc;
 using OSPhoto.Common.Interfaces;
+using AlbumModel = OSPhoto.Common.Models.Album;
+using PhotoModel = OSPhoto.Common.Models.Photo;
+using VideoModel = OSPhoto.Common.Models.Video;
 
 namespace OSPhoto.Api.photo.webapi;
 
 public class ThumbRequest : RequestBase
 {
     public string Id { get; set; }
-    public string Size;
+    public string Size { get; set; }
     [BindFrom("mtime")]
     public string MTime { get; set; }
     [BindFrom("sig")]
     public string Signature { get; set; }
 }
 
-public class Thumb(IAlbumService service) : Endpoint<ThumbRequest>
+public class Thumb(IAlbumService albumService, IPhotoService photoService, IVideoService videoService) : Endpoint<ThumbRequest>
 {
     public override void Configure()
     {
@@ -22,14 +24,19 @@ public class Thumb(IAlbumService service) : Endpoint<ThumbRequest>
 
     public override async Task HandleAsync(ThumbRequest req, CancellationToken ct)
     {
-        Logger.LogInformation("Thumb (id: {id}, sig: {sig})", req.Id, req.Signature);
+        Logger.LogInformation("Thumb (id: {id}, size: {size}, sig: {sig})", req.Id, req.Size, req.Signature);
 
         switch (req.Method)
         {
             case RequestMethod.Get:
                 try
                 {
-                    await SendStreamAsync(await service.GetThumbnail(req.Id));
+                    if (req.Id.StartsWith(AlbumModel.IdPrefix))
+                        await SendStreamAsync(await albumService.GetThumbnail(req.Id));
+                    else if (req.Id.StartsWith(PhotoModel.IdPrefix))
+                        await SendStreamAsync(await photoService.GetThumbnail(req.Id));
+                    else if (req.Id.StartsWith(VideoModel.IdPrefix))
+                        await SendStreamAsync(await videoService.GetThumbnail(req.Id, req.Size));
                 }
                 catch (Exception ex)
                 {

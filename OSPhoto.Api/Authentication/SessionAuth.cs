@@ -101,7 +101,7 @@ public sealed class SessionAuth : AuthenticationHandler<AuthenticationSchemeOpti
 
     private async Task<AuthenticationTicket> CreateAuthTicketAsync(string sessionId)
     {
-        // TODO: retrieve the user's claims/roles/permissions from a db/cache
+        // TODO: retrieve the user's claims/roles/permissions from a db/cache/env
         var identity = new ClaimsIdentity(claims: new[]
         {
             new Claim("id", "001"),

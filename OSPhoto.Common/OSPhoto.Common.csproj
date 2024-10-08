@@ -13,6 +13,7 @@
       <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
       <PackageReference Include="CsvHelper" Version="33.0.1" />
       <PackageReference Include="FastEndpoints.Attributes" Version="5.30.0" />
+      <PackageReference Include="FFMpegCore" Version="5.1.0" />
       <PackageReference Include="HeyRed.ImageSharp.Heif" Version="2.1.3" />
       <PackageReference Include="LibHeif.Native" Version="1.15.1" />
       <PackageReference Include="LibHeifSharp" Version="3.2.0" />
@@ -30,7 +31,7 @@
       </PackageReference>
       <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
     </ItemGroup>
-    
+
     <!-- source: https://github.com/BcryptNet/bcrypt.net#dotnet6-1 -->
     <ItemGroup>
         <!-- emits global using BcryptNet = global::BCrypt.Net.BCrypt; -->
@@ -45,5 +46,5 @@
         <HintPath>..\..\..\.dotnet\shared\Microsoft.AspNetCore.App\8.0.4\Microsoft.AspNetCore.Http.Features.dll</HintPath>
       </Reference>
     </ItemGroup>
-    
+
 </Project>

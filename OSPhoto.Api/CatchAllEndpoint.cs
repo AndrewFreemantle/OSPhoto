@@ -20,7 +20,7 @@ public class CatchAllEndpoint : EndpointWithoutRequest
         {
             body = await HttpContext.Request.Body.ReadAsStringAsync();
         }
-        catch (Exception e)
+        catch (Exception)
         {
            body = "[NOT A STRING]";
         }
@@ -60,23 +60,10 @@ public class CatchAllEndpoint : EndpointWithoutRequest
            > body: api=SYNO.PhotoStation.Category&method=list&version=1&limit=2147483647&PHPSESSID={GUID WITHOUT DASHES}&offset=0
            < {"success":true,"data":{"total":0,"offset":0,"categories":[]}}
 
-        // Sub-Album Selection
-        Request: POST /photo/webapi/album.php
-           > body: api=SYNO.PhotoStation.Album&method=list&version=1&offset=0&sort_by=preference&id=album_{GUID WITHOUT DASHES}&sort_direction=asc&limit=108&additional=album_permission%2Cvideo_codec%2Cvideo_quality%2Cthumb_size%2Cphoto_exif&type=album%2Cphoto%2Cvideo&PHPSESSID={GUID WITHOUT DASHES}
-
-        // Photo
-        Request: POST /photo/webapi/photo.php
-            > body: api=SYNO.PhotoStation.Photo&method=getinfo&version=1&id={PHOTO ID}&additional=photo_exif&PHPSESSID={SESSION ID}
-
         // TODO: implement comment...
         Request: POST /photo/webapi/comment.php
            > body: api=SYNO.PhotoStation.Comment&method=list&version=1&id={PHOTO ID}&PHPSESSID={SESSION ID}
            < {"success":true,"data":{"comments":[]}}
-
-        // TODO: implement cover... (set a cover photo for an album)
-        Request: POST /photo/webapi/cover.php
-           > body: api=SYNO.PhotoStation.Cover&method=set&version=1&id={ALBUM ID}&item_id={PHOTO_ID}&PHPSESSID={SESSION ID}
-
 
         // TODO: implement tag...
         Request: POST /photo/webapi/tag.php

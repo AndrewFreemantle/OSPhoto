@@ -75,7 +75,14 @@ builder.Services
     .AddScoped<IUserService, UserService>()
     .AddScoped<IAlbumService, AlbumService>()
     .AddScoped<IPhotoService, PhotoService>()
+    .AddScoped<IVideoService, VideoService>()
     .AddScoped<IStatsService, StatsService>();
+
+// Configure Kestrel
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.MaxRequestBodySize = null;     // disable the file upload limit
+});
 
 var app = builder.Build();
 

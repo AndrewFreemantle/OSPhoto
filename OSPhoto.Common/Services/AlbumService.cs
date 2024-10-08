@@ -15,17 +15,19 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
 {
     private string _mediaPath = Environment.GetEnvironmentVariable("MEDIA_PATH");
 
+    public string MediaPath => _mediaPath;
+
     public AlbumResult Get(string id = "")
     {
         try
         {
             var path = string.IsNullOrEmpty(id)
                 ? _mediaPath
-                : Path.Join(_mediaPath, ItemBase.GetPathFromId(id, Album.IdPrefix));
+                : Path.Join(_mediaPath, ItemBase.GetPathFromId(id));
 
             return new AlbumResult(GetContentDirectory(path)
                 .EnumerateFileSystemInfos()
-                .Where(fsi => fsi is DirectoryInfo || ((FileInfo)fsi).IsImageFileType())
+                .Where(fsi => fsi is DirectoryInfo || ((FileInfo)fsi).IsImageFileType() || ((FileInfo)fsi).IsVideoFileType())
                 .Select(fsi => ItemBase.ConvertToItemBase(fsi, _mediaPath, dbContext))
                 .OrderByDescending(item => item.GetType() == typeof(Album))
                 .ThenBy(item => item.Name), path, _mediaPath);
@@ -43,7 +45,7 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
         {
             var parentPath = string.IsNullOrEmpty(parentAlbumId)
                 ? _mediaPath
-                : Path.Join(_mediaPath, ItemBase.GetPathFromId(parentAlbumId, Album.IdPrefix));
+                : Path.Join(_mediaPath, ItemBase.GetPathFromId(parentAlbumId));
 
             Directory.CreateDirectory(Path.Join(parentPath, albumName));
         }
@@ -62,38 +64,38 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
         string? imagePath = null;
 
         // is this an album thumbnail request?
-        if (id.StartsWith(Album.IdPrefix))
+        if (!id.StartsWith(Album.IdPrefix))
+            return await Task.FromResult(Stream.Null);
+
+        var albumRecord = await dbContext.Albums.FindAsync(id);
+        if (albumRecord != null && !string.IsNullOrEmpty(albumRecord.CoverPhotoId))
         {
-            var albumRecord = await dbContext.Albums.FindAsync(id);
-            if (albumRecord != null && !string.IsNullOrEmpty(albumRecord.CoverPhotoId))
-            {
-                id = albumRecord.CoverPhotoId;
-            }
+            id = albumRecord.CoverPhotoId;
+        }
+        else
+        {
+            // return the photo id of the last image file within the album/directory
+            var albumPath = Path.Join(_mediaPath, ItemBase.GetPathFromId(id));
+            var dirInfo = new DirectoryInfo(albumPath);
+
+            var lastImageFileInfo = dirInfo
+                .EnumerateFiles()
+                .Where(fi => fi.IsImageFileType())
+                .MaxBy(fi => fi.Name);
+
+            if (lastImageFileInfo != null)
+                imagePath = lastImageFileInfo.FullName;
             else
             {
-                // return the photo id of the last image file within the album/directory
-                var albumPath = Path.Join(_mediaPath, ItemBase.GetPathFromId(id, Album.IdPrefix));
-                var dirInfo = new DirectoryInfo(albumPath);
-
-                var lastImageFileInfo = dirInfo
-                    .EnumerateFiles()
-                    .Where(fi => fi.IsImageFileType())
-                    .MaxBy(fi => fi.Name);
-
-                if (lastImageFileInfo != null)
-                    imagePath = lastImageFileInfo.FullName;
-                else
-                {
-                    logger.LogWarning("GetThumbnail: No cover photo id found or images contained in album: {albumId}", id);
-                    throw new ArgumentException("No cover photo set or images contained in album");
-                }
+                logger.LogWarning("GetThumbnail: No cover photo id found or images contained in album: {albumId}", id);
+                throw new ArgumentException("No cover photo set or images contained in album");
             }
         }
 
         // grab the file, then return a resized version
         var memoryStream = new MemoryStream();
 
-        imagePath ??= Path.Combine(_mediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix));
+        imagePath ??= Path.Combine(_mediaPath, ItemBase.GetPathFromId(id));
 
         using (var image = SixLabors.ImageSharp.Image.Load(imagePath))
         {
@@ -112,7 +114,7 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
             if (albumRecord == null)
                 await dbContext.Albums.AddAsync(new Database.Models.Album(
                     id,
-                    Path.Join(_mediaPath, ItemBase.GetPathFromId(id, Album.IdPrefix)),
+                    Path.Join(_mediaPath, ItemBase.GetPathFromId(id)),
                     null,
                     null,
                     photoId));
@@ -144,7 +146,7 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
             if (albumRecord == null)
                 await dbContext.Albums.AddAsync(new Database.Models.Album(
                     id,
-                    Path.Join(_mediaPath, ItemBase.GetPathFromId(id, Album.IdPrefix)),
+                    Path.Join(_mediaPath, ItemBase.GetPathFromId(id)),
                     title,
                     description,
                     coverPhotoId));
@@ -177,7 +179,7 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
     {
         var albumPath = string.IsNullOrEmpty(id)
             ? _mediaPath
-            : Path.Join(_mediaPath, ItemBase.GetPathFromId(id, Album.IdPrefix));
+            : Path.Join(_mediaPath, ItemBase.GetPathFromId(id));
 
         // shouldn't be possible to select or delete the MediaPath root, but prevent it happening anyway
         if (albumPath == _mediaPath)

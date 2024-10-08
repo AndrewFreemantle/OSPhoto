@@ -37,6 +37,7 @@ public class FileUpload(IPhotoService service) : Endpoint<FileRequest, FileRespo
         switch (req.Method)
         {
             case RequestMethod.UploadPhoto:
+            case RequestMethod.UploadVideo:
                 if (Files.Count > 0)
                 {
                     await service.Upload(Files[0], req.DestinationAlbum, req.FileName, req.Title, req.Description);

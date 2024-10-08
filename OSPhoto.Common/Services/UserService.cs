@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OSPhoto.Common.Database;
@@ -54,9 +55,12 @@ public class UserService(ApplicationDbContext dbContext, ILogger<UserService> lo
             using (var trans = await dbContext.Database.BeginTransactionAsync())
             {
                 // invalidate any existing sessions for this user
-                await dbContext
-                    .Database
-                    .ExecuteSqlRawAsync("DELETE FROM sessions WHERE Username = @p0", username);
+                if (!Debugger.IsAttached)
+                {
+                    await dbContext
+                        .Database
+                        .ExecuteSqlRawAsync("DELETE FROM sessions WHERE Username = @p0", username);
+                }
 
                 var session = new Session(username);
                 dbContext.Sessions.Add(session);

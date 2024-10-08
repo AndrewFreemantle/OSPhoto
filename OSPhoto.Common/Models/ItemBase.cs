@@ -62,13 +62,17 @@ public abstract class ItemBase
         return $"{idPrefix}{string.Join("_", parts)}";
     }
 
-    public static string GetPathFromId(string id, string idPrefix)
+    public static string GetPathFromId(string id)
     {
         if (string.IsNullOrEmpty(id))
             return string.Empty;
 
-        if (!id.StartsWith(idPrefix))
-            throw new ArgumentException($"value must begin with '{idPrefix}'", nameof(id));
+        var validPrefixes = new List<string> { Album.IdPrefix, Photo.IdPrefix, Video.IdPrefix };
+
+        var idPrefix = validPrefixes.FirstOrDefault(id.StartsWith);
+
+        if (string.IsNullOrEmpty(idPrefix))
+            throw new ArgumentException($"Media Id's must begin with '{string.Join(",", validPrefixes)}'", nameof(id));
 
         var parts = id[idPrefix.Length..]
             .Split('_', StringSplitOptions.RemoveEmptyEntries)
@@ -85,8 +89,11 @@ public abstract class ItemBase
         if (fsInfo is DirectoryInfo directoryInfo)
             return new Album(mediaPath, directoryInfo, dbContext);
 
-        if (fsInfo is FileInfo fileInfo && fileInfo.IsImageFileType())
-            return new Photo(mediaPath, fileInfo, dbContext);
+        if (fsInfo is FileInfo imageFileInfo && imageFileInfo.IsImageFileType())
+            return new Photo(mediaPath, imageFileInfo, dbContext);
+
+        if (fsInfo is FileInfo videoFileInfo && videoFileInfo.IsVideoFileType())
+            return new Video(mediaPath, videoFileInfo, dbContext);
 
         // shouldn't occur, but handle it anyway...
         return new File(fsInfo.Name, itemPath);

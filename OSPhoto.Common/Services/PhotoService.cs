@@ -1,57 +1,38 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OSPhoto.Common.Database;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Processing;
 using DbPhoto = OSPhoto.Common.Database.Models.Photo;
 
 namespace OSPhoto.Common.Services;
 
-public class PhotoService(ApplicationDbContext dbContext, ILogger<PhotoService> logger) : IPhotoService
+public class PhotoService(ApplicationDbContext dbContext, ILogger<PhotoService> logger) : ServiceBase(dbContext, logger), IPhotoService
 {
-    private string MediaPath = Environment.GetEnvironmentVariable("MEDIA_PATH");
-
-    public Photo GetInfo(string id)
+    public async Task<Stream> GetThumbnail(string id)
     {
-        var photoPath = Path.Combine(MediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix));
-        return ItemBase.ConvertToItemBase(new FileInfo(photoPath), MediaPath, dbContext) as Photo;
-    }
+        if (!id.StartsWith(Photo.IdPrefix))
+            return await Task.FromResult(Stream.Null);
 
-    public async Task EditInfo(string id, string title, string description, int? importedShareId = null)
-    {
-        try
-        {
-            var photo = await dbContext.Photos.FindAsync(id);
-            if (photo == null)
-            {
-                await dbContext.Photos.AddAsync(new DbPhoto(
-                    id,
-                    Path.Combine(MediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix)),
-                    title,
-                    description,
-                    importedShareId));
-            }
-            else
-            {
-                photo.Title = title;
-                photo.Description = description;
-                photo.ImportedShareId = importedShareId;
-                photo.UpdatedDate = DateTime.UtcNow;
-            }
+        // grab the file, then return a resized version
+        var memoryStream = new MemoryStream();
+        var imagePath = Path.Combine(_mediaPath, ItemBase.GetPathFromId(id));
 
-            await dbContext.SaveChangesAsync();
-        }
-        catch (Exception e)
+        using (var image = SixLabors.ImageSharp.Image.Load(imagePath))
         {
-            logger.LogError(e, "Exception editing photo metadata for {id}; given {title}, {description}", id, title, description);
+            image.Mutate(x => x.Resize(ThumbnailInfo.ThumbnailWidthInPixels, 0));
+            image.Save(memoryStream, new JpegEncoder());
+            memoryStream.Position = 0;
+            return memoryStream;
         }
     }
 
     public async Task<bool> Upload(IFormFile file, string destinationAlbum, string fileName, string? title, string? description)
     {
         // where do we need to upload it to?
-        var destination = MediaPath;
+        var destination = _mediaPath;
         if (!string.IsNullOrEmpty(destinationAlbum))
             destination = Path.Combine(destination, destinationAlbum);
 
@@ -80,10 +61,10 @@ public class PhotoService(ApplicationDbContext dbContext, ILogger<PhotoService> 
                 title = title ?? fileName;
                 description = description ?? null;
 
-                var id = ItemBase.GetIdForPath(MediaPath, new FileInfo(destination), Photo.IdPrefix);
+                var id = ItemBase.GetIdForPath(_mediaPath, new FileInfo(destination), Photo.IdPrefix);
                 var photo = await dbContext.Photos.FindAsync(id);
                 if (photo == null)
-                    await dbContext.Photos.AddAsync(new DbPhoto(id, MediaPath, title, description));
+                    await dbContext.Photos.AddAsync(new DbPhoto(id, _mediaPath, title, description));
                 else
                 {
                     photo.Title = title;
@@ -101,79 +82,5 @@ public class PhotoService(ApplicationDbContext dbContext, ILogger<PhotoService> 
         }
 
         return true;
-    }
-
-    public async Task<bool> Move(string id, string destinationAlbumId, bool isOverwrite)
-    {
-        var imagePath = Path.Combine(MediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix));
-
-        var destinationPath = Path
-            .Join(
-                MediaPath,
-                ItemBase.GetPathFromId(destinationAlbumId, Album.IdPrefix),
-                Path.GetFileName(imagePath));
-
-        try
-        {
-            if (!System.IO.File.Exists(destinationPath) || (System.IO.File.Exists(destinationPath) && isOverwrite))
-            {
-                System.IO.File.Move(imagePath, destinationPath);
-
-                // is there any metadata that we need to move as well?
-                var photoRecord = await dbContext.Photos.FindAsync(id);
-                if (photoRecord != null)
-                {
-
-                    await dbContext.Photos.AddAsync(new DbPhoto(
-                        ItemBase.GetIdForPath(MediaPath, new FileInfo(destinationPath), Photo.IdPrefix),
-                        destinationPath,
-                        photoRecord.Title,
-                        photoRecord.Description,
-                        photoRecord.ImportedShareId));
-
-                    dbContext.Photos.Remove(photoRecord);
-
-                    await dbContext.SaveChangesAsync();
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            logger.LogError(e, "Error moving photo (id: {id}) from {src} to {dest}",
-                id,
-                imagePath,
-                destinationPath);
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public async Task Delete(string id)
-    {
-        var imagePath = Path.Combine(MediaPath, ItemBase.GetPathFromId(id, Photo.IdPrefix));
-
-        try
-        {
-            if (System.IO.File.Exists(imagePath))
-                System.IO.File.Delete(imagePath);
-        }
-        catch (Exception e)
-        {
-            logger.LogError(e, "Error deleting photo image: {path}", imagePath);
-        }
-
-        try
-        {
-            await dbContext
-                .Photos
-                .Where(p => p.Id == id)
-                .ExecuteDeleteAsync();
-        }
-        catch (Exception e)
-        {
-            logger.LogError(e, "Error deleting photo metadata for id: {id}", id);
-        }
     }
 }

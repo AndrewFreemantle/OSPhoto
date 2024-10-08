@@ -1,3 +1,4 @@
+using FFMpegCore;
 using OSPhoto.Common.Extensions;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Metadata.Profiles.Exif;
@@ -7,6 +8,18 @@ namespace OSPhoto.Common.Models;
 
 public class ItemInfo
 {
+    private ItemInfo(FileInfo fileInfo, string? title, string? description)
+    {
+        // common file info properties
+        SharePath = fileInfo.DirectoryName;
+        Name = fileInfo.Name;
+        Title = title ?? fileInfo.Name;
+        Description = description ?? string.Empty;
+
+        CreateDate = fileInfo.CreationTimeUtc.ToString("yyyy-MM-dd HH:mm:ss");
+        Size = fileInfo.Length;
+    }
+
     public ItemInfo(string sharePath, string name, string title, string description = "")
     {
         SharePath = sharePath;
@@ -15,18 +28,8 @@ public class ItemInfo
         Description = description;
     }
 
-    public ItemInfo(FileInfo fileInfo, ImageInfo imageInfo, string? title = null, string? description = null)
+    public ItemInfo(FileInfo fileInfo, ImageInfo imageInfo, string? title = null, string? description = null) : this(fileInfo, title, description)
     {
-        // file info properties
-        SharePath = fileInfo.DirectoryName;
-        Name = fileInfo.Name;
-        Title = title ?? fileInfo.Name;
-        Description = description ?? string.Empty;
-
-        CreateDate = fileInfo.CreationTimeUtc.ToString("yyyy-MM-dd HH:mm:ss");
-        Size = fileInfo.Length;
-
-
         // photo properties
         if (imageInfo.Metadata.ExifProfile == null)
             return;
@@ -40,12 +43,20 @@ public class ItemInfo
         ResolutionX = imageInfo.Width;
         ResolutionY = imageInfo.Height;
 
-        // TODO: Get Orientation values from exif (ExifTagValue.Orientation)
         Rotation = exif.GetValueUShort(ExifTag.Orientation);
         Rotated = Rotation != 1;
 
         Latitude = exif.GetGpsLatitudeAsDecimalDegrees();
         Longitude = exif.GetGpsLongitudeAsDecimalDegrees();
+    }
+
+    public ItemInfo(FileInfo fileInfo, IMediaAnalysis videoInfo, string? title = null, string? description = null) : this(fileInfo, title, description)
+    {
+        // video properties
+        TakenDate = fileInfo.CreationTimeUtc.ToString("yyyy-MM-dd HH:mm:ss");
+
+        Duration = videoInfo.Duration.TotalSeconds;
+        Rotation = videoInfo.PrimaryVideoStream.Rotation;
     }
 
     [JsonPropertyName("sharepath")]
@@ -76,10 +87,12 @@ public class ItemInfo
     public bool Rotated { get; set; } = false;
     [JsonPropertyName("rotate_version")]
     public int RotateVersion { get; set; } = 0;
-    public ushort? Rotation { get; set; }
+    public int? Rotation { get; set; }
     [JsonPropertyName("lat")]
     public double? Latitude { get; set; }
     [JsonPropertyName("lng")]
     public double? Longitude { get; set; }
     public int Rating { get; set; } = 0;
+
+    public double Duration { get; set; } = 0;
 }

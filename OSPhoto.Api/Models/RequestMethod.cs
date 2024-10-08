@@ -14,4 +14,6 @@ internal record RequestMethod
     internal const string Delete = "delete";
     internal const string Copy = "copy";
     internal const string Create = "create";
+    internal const string UploadVideo = "uploadvideo";
+    internal const string GetVideo = "getvideo";
 }

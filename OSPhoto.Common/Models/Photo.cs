@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-using Microsoft.EntityFrameworkCore;
 using OSPhoto.Common.Database;
 using OSPhoto.Common.Extensions;
 
@@ -26,9 +24,9 @@ public class Photo : ItemBase
             AlbumPermission = new Permission(),
             Thumbnails = new Thumbnails
             {
-                Small = new ThumbnailInfo(200,200, mTime)
-                , Large = new ThumbnailInfo(200,200, mTime)
-                , Signature = fileInfo.FullName.ToHex()
+                Small = new ThumbnailInfo(200,200, mTime),
+                Large = new ThumbnailInfo(200,200, mTime),
+                Signature = fileInfo.FullName.ToHex()
             }
         };
 
