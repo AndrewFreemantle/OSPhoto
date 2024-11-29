@@ -40,8 +40,9 @@ public class AuthResponseSuccess(string sessionId, string username) : AuthRespon
         public bool RegSynoUser { get; set; } = true;
         [JsonPropertyName("is_admin")]
         public bool IsAdmin { get; set; } = true;
+
         [JsonPropertyName("allow_comment")]
-        public bool AllowComment { get; set; } = false;
+        public bool AllowComment { get; set; } = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ALLOW_COMMENTS"));
         public Permission Permission { get; set; } = new();
 
         [JsonPropertyName("enable_face_recog")]

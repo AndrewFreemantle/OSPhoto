@@ -37,6 +37,12 @@ FROM base AS final
 VOLUME ["/AppData"]
 VOLUME ["/Media"]
 
+RUN apt-get update && \
+    apt-get install -y ffmpeg && \
+    # apt-get install -y ffmpeg libgdiplus && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "OSPhoto.Api.dll"]

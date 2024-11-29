@@ -33,6 +33,14 @@ docker run \
 
 Once running, OSPhoto will accept http connections on port `5000` using any of the credentials specified in `"USERS"`.
 
+### Configuration options
+
+OSPhoto's configuration options can be altered by environment variables
+
+| Environment Variable | Description                                                   | Default  |
+|----------------------|---------------------------------------------------------------|----------|
+| ALLOW_COMMENTS       | Enables commenting threads on media. Set any value to enable. | disabled |
+
 ### Rationale
 
 There are a few reasons for this project, the main one being that Synology's PhotoStation has been superseded by a [Photos](https://www.synology.com/en-uk/dsm/feature/photos) application, which requires a version of their Disk Station Manager (DSM) which some older Synology hardware doesn't support.
@@ -46,8 +54,9 @@ There are a few reasons for this project, the main one being that Synology's Pho
 - [x] [HEIC/HEIF](https://en.wikipedia.org/wiki/High_Efficiency_Image_File_Format) photo file support
 - [x] Photo uploads, move and delete (via apps)
 - [x] Album management (via apps)
-- [ ] Video uploads, thumbnails, preview/play, edit (title & description), move and delete (via apps)
-- [ ] Tags and comments (importable from Photo Station)
+- [x] Video uploads, thumbnails, preview/play, edit (title & description), move and delete (via apps)
+- [x] Comments (importable from Photo Station)
+- [ ] Tags (importable from Photo Station)
 - [ ] Basic web browser interface: folders as albums, navigation, etc
 - [ ] Web interface administration (uploads, tagging, user accounts, etc)
 - [ ] Plugin support

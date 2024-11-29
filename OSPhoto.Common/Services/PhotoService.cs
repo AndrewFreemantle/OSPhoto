@@ -3,13 +3,14 @@ using Microsoft.Extensions.Logging;
 using OSPhoto.Common.Database;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
+using OSPhoto.Common.Services.Models;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
 using DbPhoto = OSPhoto.Common.Database.Models.Photo;
 
 namespace OSPhoto.Common.Services;
 
-public class PhotoService(ApplicationDbContext dbContext, ILogger<PhotoService> logger) : ServiceBase(dbContext, logger), IPhotoService
+public class PhotoService(ApplicationDbContext dbContext, ICommentService commentService, ILogger<PhotoService> logger) : ServiceBase(dbContext, logger), IPhotoService
 {
     public async Task<Stream> GetThumbnail(string id)
     {
@@ -27,6 +28,31 @@ public class PhotoService(ApplicationDbContext dbContext, ILogger<PhotoService> 
             memoryStream.Position = 0;
             return memoryStream;
         }
+    }
+
+    public new async Task<MoveResult> Move(string id, string destinationAlbumId, bool isOverwrite)
+    {
+        // do everything in the base method...
+        var result = await base.Move(id, destinationAlbumId, isOverwrite);
+
+        // then move any comments
+        // TODO: use Mediatr / pub/sub instead of coupling these services
+        if (result.Success)
+            result = await commentService.Move(id, result.NewId!);
+
+        return result;
+    }
+
+    public new async Task Delete(string id)
+    {
+        // do everything in the base method...
+        await base.Delete(id);
+
+        // then delete any comments
+        // TODO: use Mediatr / pub/sub instead of coupling these services
+        await commentService.Delete(id);
+
+        return;
     }
 
     public async Task<bool> Upload(IFormFile file, string destinationAlbum, string fileName, string? title, string? description)

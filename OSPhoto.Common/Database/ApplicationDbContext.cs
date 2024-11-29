@@ -9,8 +9,10 @@ public class ApplicationDbContext : DbContext
     public DbSet<Session> Sessions => Set<Session>();
     public DbSet<Photo> Photos => Set<Photo>();
     public DbSet<Album> Albums => Set<Album>();
+    public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<PhotoFileNotFound> PhotosFileNotFound => Set<PhotoFileNotFound>();
     public DbSet<AlbumDirNotFound> AlbumsDirNotFound => Set<AlbumDirNotFound>();
+    public DbSet<CommentFileNotFound> CommentsFileNotFound => Set<CommentFileNotFound>();
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {

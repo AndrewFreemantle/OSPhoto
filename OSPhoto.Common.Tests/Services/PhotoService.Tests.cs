@@ -17,6 +17,7 @@ public class PhotoServiceTests
 {
     private string _contentRootPath;
     private IAlbumService _albumService;
+    private ICommentService _commentService;
     private IPhotoService _service;
 
     [SetUp]
@@ -34,8 +35,11 @@ public class PhotoServiceTests
         var albumLogger = new Logger<AlbumService>(new LoggerFactory());
         _albumService = new AlbumService(Utilities.GetInMemoryDbContext(), albumLogger);
 
+        var commentLogger = new Logger<CommentService>(new LoggerFactory());
+        _commentService = new CommentService(Utilities.GetInMemoryDbContext(), commentLogger);
+
         var logger = new Logger<PhotoService>(new LoggerFactory());
-        _service = new PhotoService(Utilities.GetInMemoryDbContext(), logger);
+        _service = new PhotoService(Utilities.GetInMemoryDbContext(), _commentService, logger);
     }
 
     [Test]

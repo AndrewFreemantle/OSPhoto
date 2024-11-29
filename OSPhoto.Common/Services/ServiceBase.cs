@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using OSPhoto.Common.Database;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
+using OSPhoto.Common.Services.Models;
 using DbPhoto = OSPhoto.Common.Database.Models.Photo;
 
 namespace OSPhoto.Common.Services;
@@ -47,7 +48,7 @@ public class ServiceBase(ApplicationDbContext dbContext, ILogger logger) : IServ
         }
     }
 
-    public async Task<bool> Move(string id, string destinationAlbumId, bool isOverwrite)
+    public async Task<MoveResult> Move(string id, string destinationAlbumId, bool isOverwrite)
     {
         var itemPath = Path.Combine(_mediaPath, ItemBase.GetPathFromId(id));
 
@@ -56,6 +57,8 @@ public class ServiceBase(ApplicationDbContext dbContext, ILogger logger) : IServ
                 _mediaPath,
                 ItemBase.GetPathFromId(destinationAlbumId),
                 Path.GetFileName(itemPath));
+
+        var newId = ItemBase.GetIdForPath(_mediaPath, new FileInfo(destinationPath), $"{id.Split('_').First()}_");
 
         try
         {
@@ -68,7 +71,7 @@ public class ServiceBase(ApplicationDbContext dbContext, ILogger logger) : IServ
                 if (photoRecord != null)
                 {
                     await dbContext.Photos.AddAsync(new DbPhoto(
-                        ItemBase.GetIdForPath(_mediaPath, new FileInfo(destinationPath), $"{id.Split('_').First()}_"),
+                        newId,
                         destinationPath,
                         photoRecord.Title,
                         photoRecord.Description,
@@ -87,10 +90,10 @@ public class ServiceBase(ApplicationDbContext dbContext, ILogger logger) : IServ
                 itemPath,
                 destinationPath);
 
-            return false;
+            return new MoveResult(false);
         }
 
-        return true;
+        return new MoveResult(true, newId);
     }
 
     public async Task Delete(string id)

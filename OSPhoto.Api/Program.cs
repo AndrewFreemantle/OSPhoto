@@ -76,6 +76,7 @@ builder.Services
     .AddScoped<IAlbumService, AlbumService>()
     .AddScoped<IPhotoService, PhotoService>()
     .AddScoped<IVideoService, VideoService>()
+    .AddScoped<ICommentService, CommentService>()
     .AddScoped<IStatsService, StatsService>();
 
 // Configure Kestrel

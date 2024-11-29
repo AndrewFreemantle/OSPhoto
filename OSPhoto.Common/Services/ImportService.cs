@@ -1,9 +1,9 @@
 using System.Globalization;
 using CsvHelper;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using OSPhoto.Common.Database;
 using OSPhoto.Common.Database.Models;
+using OSPhoto.Common.Extensions;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
 using OSPhoto.Common.Services.Models;
@@ -12,6 +12,7 @@ using DbPhoto = OSPhoto.Common.Database.Models.Photo;
 using Photo = OSPhoto.Common.Models.Photo;
 using DbAlbum = OSPhoto.Common.Database.Models.Album;
 using Album = OSPhoto.Common.Models.Album;
+using DbComment = OSPhoto.Common.Database.Models.Comment;
 
 namespace OSPhoto.Common.Services;
 
@@ -25,14 +26,16 @@ public class ImportService(IPhotoService photoService, IAlbumService albumServic
     private readonly string _importPathSuccess = Path.Join(Environment.GetEnvironmentVariable("IMPORT_PATH"), "success");
     private readonly string _importPathFailed = Path.Join(Environment.GetEnvironmentVariable("IMPORT_PATH"), "failed");
 
+    private readonly string _importDateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+
+
     public async Task RunAsync()
     {
         logger.LogInformation("Starting...");
 
         if (!Directory.Exists(_importPath) || !Directory.GetFiles(_importPath).Any())
         {
-            logger.LogInformation(@"Import directory doesn't exist or is empty, no photo descriptions to import.
-Looked in: {importPath}", _importPath);
+            logger.LogInformation("Import directory doesn't exist or is empty, nothing to import.\nLooked in: {importPath}", _importPath);
             return;
         }
 
@@ -67,6 +70,20 @@ Looked in: {importPath}", _importPath);
             await CheckAlbumsDirNotFound();
         }
 
+        var photoCommentFilename = files.FirstOrDefault(fn => fn.Contains("photo_comment"));
+        if (!string.IsNullOrEmpty(photoCommentFilename))
+        {
+            // we have photo comments to import...
+            if (await ImportPhotoComment(photoCommentFilename))
+                MoveImportFile(photoCommentFilename, _importPathSuccess);
+            else
+                MoveImportFile(photoCommentFilename, _importPathFailed);
+        }
+        else
+        {
+            // no photo comment metadata to import, but check if any we have for missing media now match...
+            await CheckCommentsNotFound();
+        }
 
         logger.LogInformation("Finished.");
     }
@@ -397,4 +414,162 @@ Looked in: {importPath}", _importPath);
             logger.LogError(e, "Error checking albums not found metadata against the filesystem");
         }
     }
+
+
+    /// <summary>
+    /// Imports records exported from the `photo_comment` database table into OSPhoto
+    /// </summary>
+    /// <param name="csvFilename"></param>
+    private async Task<bool> ImportPhotoComment(string csvFilename)
+    {
+        logger.LogInformation("Starting import of: {file}", csvFilename);
+
+        var recordsImported = 0;
+        var recordsNotFound = 0;
+
+        try
+        {
+            // as the imported data doesn't have a timezone, default to current culture unless specified
+            var importTimezoneCulture = Environment.GetEnvironmentVariable("IMPORT_TIMEZONE_CULTURE");
+            var importCultureInfo = !string.IsNullOrEmpty(importTimezoneCulture)
+                ? new CultureInfo(importTimezoneCulture)
+                : CultureInfo.CurrentCulture;
+
+            using (var reader = new StreamReader(csvFilename))
+            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            {
+                await csv.ReadAsync();
+                csv.ReadHeader();
+
+                while (await csv.ReadAsync())
+                {
+                    try
+                    {
+                        var record = csv.GetRecord<CsvPhotoCommentRecord>();
+
+                        // trim the start of the path to match our config
+                        var recordPath = record.Path;
+                        if (recordPath.StartsWith(_synoSharePathPrefix))
+                            recordPath = Path.Join(_mediaPath, recordPath.Substring(_synoSharePathPrefix.Length));
+
+                        var createdDateUtc = DateTime
+                            .ParseExact(record.Date, _importDateTimeFormat, importCultureInfo)
+                            .ToUniversalTime();
+
+                        if (File.Exists(recordPath))
+                        {
+                            var fsInfo = new FileInfo(recordPath);
+                            var prefix = fsInfo.IsImageFileType() ? Photo.IdPrefix : Video.IdPrefix;
+
+                            if (await Import(ItemBase.GetIdForPath(_mediaPath, fsInfo, prefix), record, createdDateUtc))
+                                recordsImported++;
+                        }
+                        else
+                        {
+                            logger.LogDebug(" > Photo file not found: {recordPath}", recordPath);
+                            if (await ImportNotFound(record, createdDateUtc, csvFilename))
+                                recordsNotFound++;
+                        }
+
+                    }
+                    catch (Exception innerE)
+                    {
+                        logger.LogError(innerE, "Exception importing CSV record");
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Exception reading import file: {file}", csvFilename);
+            return false;
+        }
+        finally
+        {
+            await dbContext.SaveChangesAsync();
+        }
+
+        logger.LogInformation("Finished. Imported {recordsImportedCount} successfully from: {file}", recordsImported, csvFilename);
+
+        if (recordsNotFound > 0)
+            logger.LogInformation(" > Saved information about {recordsFileNotFoundCount} comments that couldn't find the media file for.", recordsNotFound);
+
+        return true;
+    }
+
+    private async Task<bool> Import(string id, CsvPhotoCommentRecord record, DateTime createdDate)
+    {
+        await dbContext.Comments.AddAsync(new DbComment(
+            id,
+            record.Comment,
+            record.Name,
+            record.Email
+            ) { CreatedUtc = createdDate }
+        );
+
+        return true;
+    }
+
+    private async Task<bool> ImportNotFound(CsvPhotoCommentRecord record, DateTime createdDate, string csvFilename)
+    {
+        var cfnf = await dbContext
+            .CommentsFileNotFound
+            .FindAsync(record.Id);
+
+        if (cfnf != null) return false;
+
+        cfnf = new CommentFileNotFound(record, createdDate, csvFilename);
+
+        await dbContext.CommentsFileNotFound.AddAsync(cfnf);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Checks each record in the photo comments database against the file system to see if there's now a matching file
+    /// (this could be because we'd imported photo comments, but were still copying over the photo files)
+    /// </summary>
+    private async Task CheckCommentsNotFound()
+    {
+        if (!await dbContext.CommentsFileNotFound.AnyAsync())
+            return;
+
+        try
+        {
+            for (int i = dbContext.CommentsFileNotFound.Count() - 1; i >= 0; i--)
+            {
+                try
+                {
+                    var record = await dbContext.CommentsFileNotFound.ElementAtAsync(i);
+
+                    var recordPath = record.Path;
+                    if (recordPath.StartsWith(_synoSharePathPrefix))
+                        recordPath = Path.Join(_mediaPath, recordPath.Substring(_synoSharePathPrefix.Length));
+
+                    if (File.Exists(recordPath))
+                    {
+                        using (var trans = await dbContext.Database.BeginTransactionAsync())
+                        {
+                            var fsInfo = new FileInfo(recordPath);
+                            var id = ItemBase.GetIdForPath(_mediaPath, fsInfo, Photo.IdPrefix);
+                            await Import(id, new CsvPhotoCommentRecord(record), record.CreatedUtc);
+
+                            dbContext.CommentsFileNotFound.Remove(record);
+
+                            await dbContext.SaveChangesAsync();
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    // exception doesn't matter here as this record can be retried
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error checking photo comments not found against the filesystem");
+        }
+    }
+
 }
