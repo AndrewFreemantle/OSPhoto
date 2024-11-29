@@ -39,7 +39,6 @@ VOLUME ["/Media"]
 
 RUN apt-get update && \
     apt-get install -y ffmpeg && \
-    # apt-get install -y ffmpeg libgdiplus && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
