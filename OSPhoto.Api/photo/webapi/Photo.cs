@@ -1,5 +1,3 @@
-using OSPhoto.Common.Interfaces;
-
 namespace OSPhoto.Api.photo.webapi;
 
 

@@ -8,7 +8,6 @@ using NSwag;
 using OSPhoto.Api.Authentication;
 using OSPhoto.Api.Processors;
 using OSPhoto.Common.Database;
-using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Services;
 using SixLabors.ImageSharp;
 
@@ -77,7 +76,8 @@ builder.Services
     .AddScoped<IPhotoService, PhotoService>()
     .AddScoped<IVideoService, VideoService>()
     .AddScoped<ICommentService, CommentService>()
-    .AddScoped<IStatsService, StatsService>();
+    .AddScoped<IStatsService, StatsService>()
+    .AddSingleton<IFileSystem, FileSystem>();
 
 // Configure Kestrel
 builder.WebHost.ConfigureKestrel(serverOptions =>

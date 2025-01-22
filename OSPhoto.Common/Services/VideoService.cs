@@ -9,7 +9,7 @@ using DbPhoto = OSPhoto.Common.Database.Models.Photo;
 
 namespace OSPhoto.Common.Services;
 
-public class VideoService(ApplicationDbContext dbContext, ILogger<VideoService> logger) : ServiceBase(dbContext, logger), IVideoService
+public class VideoService(ApplicationDbContext dbContext, IFileSystem fileSystem, ILogger<VideoService> logger) : ServiceBase(dbContext, fileSystem, logger), IVideoService
 {
     public async Task<Stream> GetThumbnail(string id, string? size = "small")
     {

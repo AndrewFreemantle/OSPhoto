@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using OSPhoto.Common.Database;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
@@ -8,14 +7,14 @@ using DbPhoto = OSPhoto.Common.Database.Models.Photo;
 
 namespace OSPhoto.Common.Services;
 
-public class ServiceBase(ApplicationDbContext dbContext, ILogger logger) : IServiceBase
+public class ServiceBase(ApplicationDbContext dbContext, IFileSystem fileSystem, ILogger logger) : IServiceBase
 {
     protected string _mediaPath = Environment.GetEnvironmentVariable("MEDIA_PATH");
 
     public ItemBase GetInfo(string id)
     {
         var photoPath = Path.Combine(_mediaPath, ItemBase.GetPathFromId(id));
-        return ItemBase.ConvertToItemBase(new FileInfo(photoPath), _mediaPath, dbContext);
+        return ItemBase.ConvertToItemBase(fileSystem.FileInfo.New(photoPath), _mediaPath, dbContext);
     }
 
     public async Task EditInfo(string id, string title, string description, int? importedShareId = null)
@@ -58,7 +57,7 @@ public class ServiceBase(ApplicationDbContext dbContext, ILogger logger) : IServ
                 ItemBase.GetPathFromId(destinationAlbumId),
                 Path.GetFileName(itemPath));
 
-        var newId = ItemBase.GetIdForPath(_mediaPath, new FileInfo(destinationPath), $"{id.Split('_').First()}_");
+        var newId = ItemBase.GetIdForPath(_mediaPath, fileSystem.FileInfo.New(destinationPath), $"{id.Split('_').First()}_");
 
         try
         {

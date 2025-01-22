@@ -8,7 +8,7 @@ public class Video : ItemBase
 {
     public new static string IdPrefix => "video_";
 
-    public Video(string mediaPath, FileInfo fileInfo, ApplicationDbContext dbContext) : base(fileInfo)
+    public Video(string mediaPath, IFileInfo fileInfo, ApplicationDbContext dbContext) : base(fileInfo)
     {
         Id = GetIdForPath(mediaPath, fileInfo, IdPrefix);
         Type = "video";

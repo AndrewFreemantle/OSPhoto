@@ -7,4 +7,5 @@ public interface IPhotoService : IServiceBase
 {
     Task<Stream> GetThumbnail(string id);
     Task<bool> Upload(IFormFile file, string destinationAlbum, string fileName, string? title, string? description);
+    Task<string> CheckIfDestinationExists(string destination);
 }

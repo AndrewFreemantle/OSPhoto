@@ -5,7 +5,7 @@ namespace OSPhoto.Common.Models;
 
 public class VideoQuality : VideoCodec
 {
-    public VideoQuality(IMediaAnalysis videoInfo, FileInfo fileInfo) : base(videoInfo)
+    public VideoQuality(IMediaAnalysis videoInfo, IFileInfo fileInfo) : base(videoInfo)
     {
         // Id is the full path to the video file, hex encoded.
         Id = fileInfo.FullName.ToHex();

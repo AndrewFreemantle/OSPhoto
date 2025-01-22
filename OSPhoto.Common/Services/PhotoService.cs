@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using OSPhoto.Common.Database;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
@@ -10,7 +9,7 @@ using DbPhoto = OSPhoto.Common.Database.Models.Photo;
 
 namespace OSPhoto.Common.Services;
 
-public class PhotoService(ApplicationDbContext dbContext, ICommentService commentService, ILogger<PhotoService> logger) : ServiceBase(dbContext, logger), IPhotoService
+public class PhotoService(ApplicationDbContext dbContext, ICommentService commentService, IFileSystem fileSystem, ILogger<PhotoService> logger) : ServiceBase(dbContext, fileSystem, logger), IPhotoService
 {
     public async Task<Stream> GetThumbnail(string id)
     {
@@ -62,7 +61,8 @@ public class PhotoService(ApplicationDbContext dbContext, ICommentService commen
         if (!string.IsNullOrEmpty(destinationAlbum))
             destination = Path.Combine(destination, destinationAlbum);
 
-        destination = Path.Combine(destination, fileName);
+        // add in the fileName and check if it exists
+        destination = await CheckIfDestinationExists(Path.Combine(destination, fileName));
 
         logger.LogInformation("Writing new file to: {destination}", destination);
         try
@@ -87,7 +87,7 @@ public class PhotoService(ApplicationDbContext dbContext, ICommentService commen
                 title = title ?? fileName;
                 description = description ?? null;
 
-                var id = ItemBase.GetIdForPath(_mediaPath, new FileInfo(destination), Photo.IdPrefix);
+                var id = ItemBase.GetIdForPath(_mediaPath, fileSystem.FileInfo.New(destination), Photo.IdPrefix);
                 var photo = await dbContext.Photos.FindAsync(id);
                 if (photo == null)
                     await dbContext.Photos.AddAsync(new DbPhoto(id, _mediaPath, title, description));
@@ -108,5 +108,31 @@ public class PhotoService(ApplicationDbContext dbContext, ICommentService commen
         }
 
         return true;
+    }
+
+    private const char SuffixSeparator = '_';
+
+    public async Task<string> CheckIfDestinationExists(string destination)
+    {
+        var fi = fileSystem.FileInfo.New(destination);
+        if (!fi.Exists) return destination;
+
+        var filename = fi.Name.Substring(0, fi.Name.Length - fi.Extension.Length);
+        var filenameExtension = fi.Extension;
+
+        if (filename.Contains(SuffixSeparator))
+        {
+            // is the final part of the filename a number?
+            var filenameParts = filename.Split(SuffixSeparator);
+            if (int.TryParse(filenameParts.Last(), out var num))
+            {
+                // it is - increment it, reconstruct the filename and then check if that exists...
+                filenameParts[filenameParts.Length - 1] = (num + 1).ToString();
+                return await CheckIfDestinationExists(Path.Combine(fi.DirectoryName, $"{string.Join(SuffixSeparator, filenameParts)}{filenameExtension}"));
+            }
+        }
+
+        // add a suffix
+        return await CheckIfDestinationExists(Path.Combine(fi.DirectoryName, $"{filename}{SuffixSeparator}1{filenameExtension}"));
     }
 }

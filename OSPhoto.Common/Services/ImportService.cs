@@ -16,7 +16,7 @@ using DbComment = OSPhoto.Common.Database.Models.Comment;
 
 namespace OSPhoto.Common.Services;
 
-public class ImportService(IPhotoService photoService, IAlbumService albumService, ApplicationDbContext dbContext, ILogger<ImportService> logger) : IImportService
+public class ImportService(IPhotoService photoService, IAlbumService albumService, ApplicationDbContext dbContext, IFileSystem fileSystem, ILogger<ImportService> logger) : IImportService
 {
     private string _synoSharePathPrefix = Environment.GetEnvironmentVariable("SYNO_SHARE_PATH_PREFIX") ?? "/volume1/photo/";
     private string _mediaPath = Environment.GetEnvironmentVariable("MEDIA_PATH");
@@ -95,12 +95,12 @@ public class ImportService(IPhotoService photoService, IAlbumService albumServic
             // ensure the destination exists
             Directory.CreateDirectory(destination);
 
-            var file = new FileInfo(importFilename);
-            file = new FileInfo(Path.Join(destination, file.Name));
+            var file = fileSystem.FileInfo.New(importFilename);
+            file = fileSystem.FileInfo.New(Path.Join(destination, file.Name));
 
             // check destination doesn't have a file with the same name already...
             if (file.Exists)
-                file = new FileInfo(Path.Join(destination, $"{DateTime.UtcNow.Ticks}-{file.Name}"));
+                file = fileSystem.FileInfo.New(Path.Join(destination, $"{DateTime.UtcNow.Ticks}-{file.Name}"));
 
             File.Move(importFilename, file.FullName);
         }
@@ -146,7 +146,7 @@ public class ImportService(IPhotoService photoService, IAlbumService albumServic
 
                         if (File.Exists(recordPath))
                         {
-                            var fsInfo = new FileInfo(recordPath);
+                            var fsInfo = fileSystem.FileInfo.New(recordPath);
                             record.Title ??= fsInfo.Name;
                             if (await Import(ItemBase.GetIdForPath(_mediaPath, fsInfo, Photo.IdPrefix), recordPath, record))
                                 recordsImported++;
@@ -244,7 +244,7 @@ public class ImportService(IPhotoService photoService, IAlbumService albumServic
                     {
                         using (var trans = await dbContext.Database.BeginTransactionAsync())
                         {
-                            var fsInfo = new FileInfo(recordPath);
+                            var fsInfo = fileSystem.FileInfo.New(recordPath);
                             var id = ItemBase.GetIdForPath(_mediaPath, fsInfo, Photo.IdPrefix);
                             await photoService.EditInfo(id, record.Title ?? fsInfo.Name, record.Description ?? string.Empty,
                                 record.ShareId);
@@ -297,7 +297,7 @@ public class ImportService(IPhotoService photoService, IAlbumService albumServic
 
                         if (Directory.Exists(recordPath))
                         {
-                            var dirInfo = new DirectoryInfo(recordPath);
+                            var dirInfo = fileSystem.DirectoryInfo.New(recordPath);
                             if (string.IsNullOrEmpty(record.Title))
                                 record.Title = dirInfo.Name;
 
@@ -389,7 +389,7 @@ public class ImportService(IPhotoService photoService, IAlbumService albumServic
                         using (var trans = await dbContext.Database.BeginTransactionAsync())
                         {
 
-                            var dirInfo = new DirectoryInfo(recordPath);
+                            var dirInfo = fileSystem.DirectoryInfo.New(recordPath);
                             var id = ItemBase.GetIdForPath(_mediaPath, dirInfo, Photo.IdPrefix);
 
                             // find the photo for this album's cover, if there is one
@@ -458,7 +458,7 @@ public class ImportService(IPhotoService photoService, IAlbumService albumServic
 
                         if (File.Exists(recordPath))
                         {
-                            var fsInfo = new FileInfo(recordPath);
+                            var fsInfo = fileSystem.FileInfo.New(recordPath);
                             var prefix = fsInfo.IsImageFileType() ? Photo.IdPrefix : Video.IdPrefix;
 
                             if (await Import(ItemBase.GetIdForPath(_mediaPath, fsInfo, prefix), record, createdDateUtc))
@@ -550,7 +550,7 @@ public class ImportService(IPhotoService photoService, IAlbumService albumServic
                     {
                         using (var trans = await dbContext.Database.BeginTransactionAsync())
                         {
-                            var fsInfo = new FileInfo(recordPath);
+                            var fsInfo = fileSystem.FileInfo.New(recordPath);
                             var id = ItemBase.GetIdForPath(_mediaPath, fsInfo, Photo.IdPrefix);
                             await Import(id, new CsvPhotoCommentRecord(record), record.CreatedUtc);
 

@@ -1,4 +1,3 @@
-using OSPhoto.Common.Interfaces;
 using DbComment = OSPhoto.Common.Database.Models.Comment;
 
 namespace OSPhoto.Api.photo.webapi;

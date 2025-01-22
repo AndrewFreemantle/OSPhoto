@@ -7,7 +7,7 @@ public class Photo : ItemBase
 {
     public new static string IdPrefix => "photo_";
 
-    public Photo(string mediaPath, FileInfo fileInfo, ApplicationDbContext dbContext) : base(fileInfo)
+    public Photo(string mediaPath, IFileInfo fileInfo, ApplicationDbContext dbContext) : base(fileInfo)
     {
         Id = GetIdForPath(mediaPath, fileInfo, IdPrefix);
         Type = "photo";

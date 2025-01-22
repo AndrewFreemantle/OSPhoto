@@ -1,4 +1,3 @@
-using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Services.Models;
 
 public class Stats(IStatsService service) : EndpointWithoutRequest<StatsResponse>

@@ -1,5 +1,4 @@
 using OSPhoto.Common.Extensions;
-using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
 using AlbumModel = OSPhoto.Common.Models.Album;
 using PhotoModel = OSPhoto.Common.Models.Photo;
@@ -17,7 +16,7 @@ public class DownloadRequest : RequestBase
 }
 
 
-public class Download(IAlbumService albumService) : Endpoint<DownloadRequest>
+public class Download(IAlbumService albumService, IFileSystem fileSystem) : Endpoint<DownloadRequest>
 {
     public override void Configure()
     {
@@ -34,7 +33,7 @@ public class Download(IAlbumService albumService) : Endpoint<DownloadRequest>
                 try
                 {
                     var videoPath = Path.Combine(albumService.MediaPath, ItemBase.GetPathFromId(req.Id));
-                    var fi = new FileInfo(videoPath);
+                    var fi = fileSystem.FileInfo.New(videoPath);
 
                     // Set the Cache-Control header
                     HttpContext.Response.Headers["Cache-Control"] = $"max-age={3600 * 24 * 7}"; // one week

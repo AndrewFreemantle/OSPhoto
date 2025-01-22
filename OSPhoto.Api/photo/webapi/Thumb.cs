@@ -1,4 +1,3 @@
-using OSPhoto.Common.Interfaces;
 using AlbumModel = OSPhoto.Common.Models.Album;
 using PhotoModel = OSPhoto.Common.Models.Photo;
 using VideoModel = OSPhoto.Common.Models.Video;

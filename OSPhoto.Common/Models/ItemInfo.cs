@@ -8,7 +8,7 @@ namespace OSPhoto.Common.Models;
 
 public class ItemInfo
 {
-    private ItemInfo(FileInfo fileInfo, string? title, string? description)
+    private ItemInfo(IFileInfo fileInfo, string? title, string? description)
     {
         // common file info properties
         SharePath = fileInfo.DirectoryName;
@@ -28,7 +28,7 @@ public class ItemInfo
         Description = description;
     }
 
-    public ItemInfo(FileInfo fileInfo, ImageInfo imageInfo, string? title = null, string? description = null) : this(fileInfo, title, description)
+    public ItemInfo(IFileInfo fileInfo, ImageInfo imageInfo, string? title = null, string? description = null) : this(fileInfo, title, description)
     {
         // photo properties
         if (imageInfo.Metadata.ExifProfile == null)
@@ -50,7 +50,7 @@ public class ItemInfo
         Longitude = exif.GetGpsLongitudeAsDecimalDegrees();
     }
 
-    public ItemInfo(FileInfo fileInfo, IMediaAnalysis videoInfo, string? title = null, string? description = null) : this(fileInfo, title, description)
+    public ItemInfo(IFileInfo fileInfo, IMediaAnalysis videoInfo, string? title = null, string? description = null) : this(fileInfo, title, description)
     {
         // video properties
         TakenDate = fileInfo.CreationTimeUtc.ToString("yyyy-MM-dd HH:mm:ss");

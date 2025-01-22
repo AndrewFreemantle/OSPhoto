@@ -1,5 +1,3 @@
-using OSPhoto.Common.Interfaces;
-
 namespace OSPhoto.Api.photo.webapi;
 
 public class FileRequest : RequestBase
@@ -12,7 +10,7 @@ public class FileRequest : RequestBase
     public string? Title { get; set; }
     public string? FileName { get; set; }
     public string? Description { get; set; }
-    public string? Duplicate { get; set; }  // "replace"
+    public string? Duplicate { get; set; }  // "rename" (no way to change this in DSphoto)
     public string? Name { get; set; }
 }
 

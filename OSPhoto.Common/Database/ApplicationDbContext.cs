@@ -34,9 +34,9 @@ public class ApplicationDbContext : DbContext
     {
         // ensure the database path exists if given...
         if (!string.IsNullOrEmpty(databasePath))
-            new DirectoryInfo(databasePath).Parent!.Create();
+            new FileSystem().DirectoryInfo.New(databasePath).Parent!.Create();
 
-        // todo: try-catch?
+        // TODO: try-catch?
         Database.Migrate();
     }
 

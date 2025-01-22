@@ -9,14 +9,14 @@ public static class FileSystemInfoExtensions
     // source: https://www.synology.com/en-global/dsm/6.2/software_spec/photo_station
     private static readonly string[] VideoFileExtensions = ["3G2", "3GP", "ASF", "AVI", "DAT", "DIVX", "FLV", "M4V", "MOV", "MP4", "MPEG", "MPG", "MTS", "M2TS", "M2T", "QT", "WMV", "XVID", "F4V"];
 
-    public static bool IsImageFileType(this FileSystemInfo fsInfo)
+    public static bool IsImageFileType(this IFileSystemInfo fsInfo)
     {
         if (string.IsNullOrEmpty(fsInfo.Extension) || NonImageFileExtensions.Contains(fsInfo.Extension)) return false;
 
         try
         {
-            var imageFormat = Image.DetectFormat(fsInfo.FullName);
-            return imageFormat != null;
+            _ = Image.DetectFormat(fsInfo.FullName);
+            return true;
         }
         catch (Exception)
         {
@@ -24,13 +24,12 @@ public static class FileSystemInfoExtensions
         }
     }
 
-
-    public static bool IsVideoFileType(this FileSystemInfo fsInfo)
+    public static bool IsVideoFileType(this IFileSystemInfo fsInfo)
     {
         return VideoFileExtensions.Contains(fsInfo.Extension.ToUpperInvariant().TrimStart('.'));
     }
 
-    public static DateTimeOffset LastModifiedOffsetUtc(this FileSystemInfo fsInfo)
+    public static DateTimeOffset LastModifiedOffsetUtc(this IFileSystemInfo fsInfo)
     {
         return new DateTimeOffset(fsInfo.LastWriteTimeUtc);
     }
@@ -39,10 +38,9 @@ public static class FileSystemInfoExtensions
     /// <summary>
     /// Returns the ContentType or MimeType for a given file
     /// </summary>
-    public static string ContentType(this FileSystemInfo fsInfo)
+    public static string ContentType(this IFileSystemInfo fsInfo)
     {
-        string contentType;
-        if (!MimeTypes.TryGetMimeType(fsInfo.FullName, out contentType))
+        if (!MimeTypes.TryGetMimeType(fsInfo.FullName, out var contentType))
         {
             contentType = "application/octet-stream";
         }

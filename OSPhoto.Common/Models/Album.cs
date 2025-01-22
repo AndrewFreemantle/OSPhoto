@@ -8,7 +8,7 @@ public class Album : ItemBase
 {
     public new static string IdPrefix => "album_";
 
-    public Album(string mediaPath, DirectoryInfo dirInfo, ApplicationDbContext dbContext) : base(dirInfo)
+    public Album(string mediaPath, IDirectoryInfo dirInfo, ApplicationDbContext dbContext) : base(dirInfo)
     {
         var sharePath = dirInfo.FullName[mediaPath.Length..].TrimStart(System.IO.Path.DirectorySeparatorChar);
         Id = $"{IdPrefix}{sharePath.ToHex()}";

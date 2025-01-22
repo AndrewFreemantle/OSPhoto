@@ -11,7 +11,7 @@ using Exception = System.Exception;
 
 namespace OSPhoto.Common.Services;
 
-public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> logger) : IAlbumService
+public class AlbumService(ApplicationDbContext dbContext, IFileSystem fileSystem, ILogger<AlbumService> logger) : IAlbumService
 {
     private string _mediaPath = Environment.GetEnvironmentVariable("MEDIA_PATH");
 
@@ -27,7 +27,7 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
 
             return new AlbumResult(GetContentDirectory(path)
                 .EnumerateFileSystemInfos()
-                .Where(fsi => fsi is DirectoryInfo || ((FileInfo)fsi).IsImageFileType() || ((FileInfo)fsi).IsVideoFileType())
+                .Where(fsi => fsi is IDirectoryInfo || (fsi is IFileInfo fileInfo && (fileInfo.IsImageFileType() || fileInfo.IsVideoFileType())))
                 .Select(fsi => ItemBase.ConvertToItemBase(fsi, _mediaPath, dbContext))
                 .OrderByDescending(item => item.GetType() == typeof(Album))
                 .ThenBy(item => item.Name), path, _mediaPath);
@@ -76,7 +76,7 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
         {
             // return the photo id of the last image file within the album/directory
             var albumPath = Path.Join(_mediaPath, ItemBase.GetPathFromId(id));
-            var dirInfo = new DirectoryInfo(albumPath);
+            var dirInfo = fileSystem.DirectoryInfo.New(albumPath);
 
             var lastImageFileInfo = dirInfo
                 .EnumerateFiles()
@@ -213,9 +213,9 @@ public class AlbumService(ApplicationDbContext dbContext, ILogger<AlbumService> 
         return true;
     }
 
-    private DirectoryInfo GetContentDirectory(string path = null)
+    private IDirectoryInfo GetContentDirectory(string path = null)
     {
-        return new DirectoryInfo(
+        return fileSystem.DirectoryInfo.New(
             string.IsNullOrEmpty(path)
             || string.IsNullOrWhiteSpace(path)
                 ? _mediaPath

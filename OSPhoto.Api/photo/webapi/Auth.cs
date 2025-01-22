@@ -1,5 +1,4 @@
 using OSPhoto.Api;
-using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
 
 public class AuthRequest : RequestBase

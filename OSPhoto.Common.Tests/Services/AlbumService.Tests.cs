@@ -1,6 +1,5 @@
-using Microsoft.EntityFrameworkCore;
+using System.IO.Abstractions;
 using Microsoft.Extensions.Logging;
-using OSPhoto.Common.Database;
 using OSPhoto.Common.Exceptions;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
@@ -24,13 +23,13 @@ public class AlbumServiceTests
         // `System.IO.Directory.GetCurrentDirectory()` returns something like
         //     /home/{user}/projects/OSPhoto/OSPhoto.Common.Tests/bin/Debug/net8.0
         //  and we need this dir  ------^
-        var currentDirectory = new DirectoryInfo(System.IO.Directory.GetCurrentDirectory());
+        var currentDirectory = new FileSystem().DirectoryInfo.New(Directory.GetCurrentDirectory());
         _contentRootPath = currentDirectory.Parent?.Parent?.Parent?.Parent?.FullName ?? string.Empty;
 
         Environment.SetEnvironmentVariable("MEDIA_PATH", Path.Join(_contentRootPath, "Media"));
 
         var logger = new Logger<AlbumService>(new LoggerFactory());
-        _service = new AlbumService(Utilities.GetInMemoryDbContext(), logger);
+        _service = new AlbumService(Utilities.GetInMemoryDbContext(), new FileSystem(), logger);
     }
 
     [Test]

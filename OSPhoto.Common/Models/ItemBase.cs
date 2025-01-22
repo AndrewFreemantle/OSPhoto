@@ -7,7 +7,7 @@ public abstract class ItemBase
 {
     public static string IdPrefix => "itembase_";
 
-    public ItemBase(FileSystemInfo fsInfo)
+    public ItemBase(IFileSystemInfo fsInfo)
     {
         Name = fsInfo.Name;
         Path = fsInfo.FullName;
@@ -42,15 +42,15 @@ public abstract class ItemBase
     public string ThumbnailStatus { get; set; }
 
 
-    public static string GetIdForPath(string mediaPath, FileSystemInfo fsInfo, string idPrefix)
+    public static string GetIdForPath(string mediaPath, IFileSystemInfo fsInfo, string idPrefix)
     {
-        var rootDirInfo = new DirectoryInfo(mediaPath.TrimEnd(System.IO.Path.DirectorySeparatorChar));
+        var rootDirInfo = new FileSystem().DirectoryInfo.New(mediaPath.TrimEnd(System.IO.Path.DirectorySeparatorChar));
         var parts = new List<string>();
 
-        if (fsInfo is FileInfo fileInfo)
+        if (fsInfo is IFileInfo fileInfo)
             parts.Add(fileInfo.Name.ToHex());
 
-        var dir = (fsInfo is DirectoryInfo) ? fsInfo as DirectoryInfo : ((FileInfo)fsInfo).Directory;
+        var dir = fsInfo as IDirectoryInfo ?? ((IFileInfo)fsInfo).Directory;
         while (dir != null && dir.FullName != rootDirInfo.FullName)
         {
             parts.Add(dir.Name.ToHex());
@@ -82,17 +82,17 @@ public abstract class ItemBase
         return System.IO.Path.Combine(parts);
     }
 
-    public static ItemBase ConvertToItemBase(FileSystemInfo fsInfo, string mediaPath, ApplicationDbContext dbContext)
+    public static ItemBase ConvertToItemBase(IFileSystemInfo fsInfo, string mediaPath, ApplicationDbContext dbContext)
     {
         var itemPath = fsInfo.FullName.Substring(mediaPath.Length);
 
-        if (fsInfo is DirectoryInfo directoryInfo)
+        if (fsInfo is IDirectoryInfo directoryInfo)
             return new Album(mediaPath, directoryInfo, dbContext);
 
-        if (fsInfo is FileInfo imageFileInfo && imageFileInfo.IsImageFileType())
+        if (fsInfo is IFileInfo imageFileInfo && imageFileInfo.IsImageFileType())
             return new Photo(mediaPath, imageFileInfo, dbContext);
 
-        if (fsInfo is FileInfo videoFileInfo && videoFileInfo.IsVideoFileType())
+        if (fsInfo is IFileInfo videoFileInfo && videoFileInfo.IsVideoFileType())
             return new Video(mediaPath, videoFileInfo, dbContext);
 
         // shouldn't occur, but handle it anyway...
