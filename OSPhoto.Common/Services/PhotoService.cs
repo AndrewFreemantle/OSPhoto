@@ -119,20 +119,15 @@ public class PhotoService(ApplicationDbContext dbContext, ICommentService commen
 
         var filename = fi.Name.Substring(0, fi.Name.Length - fi.Extension.Length);
         var filenameExtension = fi.Extension;
+        var suffix = 1;
 
-        if (filename.Contains(SuffixSeparator))
+        do
         {
-            // is the final part of the filename a number?
-            var filenameParts = filename.Split(SuffixSeparator);
-            if (int.TryParse(filenameParts.Last(), out var num))
-            {
-                // it is - increment it, reconstruct the filename and then check if that exists...
-                filenameParts[filenameParts.Length - 1] = (num + 1).ToString();
-                return await CheckIfDestinationExists(Path.Combine(fi.DirectoryName, $"{string.Join(SuffixSeparator, filenameParts)}{filenameExtension}"));
-            }
-        }
+            destination = Path.Combine(fi.DirectoryName, $"{filename}{SuffixSeparator}{suffix}{filenameExtension}");
+            suffix++;
+        } while (fileSystem.File.Exists(destination));
 
         // add a suffix
-        return await CheckIfDestinationExists(Path.Combine(fi.DirectoryName, $"{filename}{SuffixSeparator}1{filenameExtension}"));
+        return await Task.FromResult(destination);
     }
 }

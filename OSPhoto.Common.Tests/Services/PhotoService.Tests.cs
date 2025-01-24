@@ -62,14 +62,14 @@ public class PhotoServiceTests
     public async Task ChecksDestinationFileExists_DoesNotExist()
     {
         // Arrange
-        var filename = "/Media/Album 1/does-not-exist.jpeg";
+        var filename = "/Media/Album 1/IMG_01234.jpeg";
 
         var mockFileSystem = new Mock<IFileSystem>();
         var mockFileInfo = new Mock<IFileInfo>();
 
         mockFileInfo.Setup(fi => fi.Exists).Returns(false);
         mockFileInfo.Setup(fi => fi.FullName).Returns(filename);
-        mockFileInfo.Setup(fi => fi.Name).Returns("does-not-exist.jpeg");
+        mockFileInfo.Setup(fi => fi.Name).Returns("IMG_01234.jpeg");
         mockFileInfo.Setup(fi => fi.Extension).Returns(".jpeg");
         mockFileInfo.Setup(fi => fi.DirectoryName).Returns("/Media/Album 1");
 
@@ -89,23 +89,20 @@ public class PhotoServiceTests
     public async Task ChecksDestinationFileExists_Exists()
     {
         // Arrange
-        var filename       = "/Media/Album 1/photo-exists.jpeg";
-        var expectedResult = "/Media/Album 1/photo-exists_1.jpeg";
+        var filename       = "/Media/Album 1/IMG_01234.jpeg";
+        var expectedResult = "/Media/Album 1/IMG_01234_1.jpeg";
 
         var mockFileSystem = new Mock<IFileSystem>();
         var mockFileInfo = new Mock<IFileInfo>();
 
         mockFileInfo.Setup(fi => fi.Exists).Returns(true);
         mockFileInfo.Setup(fi => fi.FullName).Returns(filename);
-        mockFileInfo.Setup(fi => fi.Name).Returns("photo-exists.jpeg");
+        mockFileInfo.Setup(fi => fi.Name).Returns("IMG_01234.jpeg");
         mockFileInfo.Setup(fi => fi.Extension).Returns(".jpeg");
         mockFileInfo.Setup(fi => fi.DirectoryName).Returns("/Media/Album 1");
 
-        var secondMockFileInfo = new Mock<IFileInfo>();
-        secondMockFileInfo.Setup(fi => fi.Exists).Returns(false);
-
         mockFileSystem.Setup(fs => fs.FileInfo.New(It.Is<string>(s => s == filename))).Returns(mockFileInfo.Object);
-        mockFileSystem.Setup(fs => fs.FileInfo.New(It.Is<string>(s => s == expectedResult))).Returns(secondMockFileInfo.Object);
+        mockFileSystem.Setup(fs => fs.File.Exists(It.Is<string>(s => s == expectedResult))).Returns(false);
 
         _fileSystem = mockFileSystem.Object;
         _service = new PhotoService(Utilities.GetInMemoryDbContext(), _commentService, _fileSystem, _logger);
@@ -120,23 +117,23 @@ public class PhotoServiceTests
     [Test]
     public async Task ChecksDestinationFileExists_MultipleExists()
     {
-        var filename       = "/Media/Album 1/photo-exists_4.jpeg";
-        var expectedResult = "/Media/Album 1/photo-exists_5.jpeg";
+        var filename       = "/Media/Album 1/IMG_01234.jpeg";
+        var existsOne      = "/Media/Album 1/IMG_01234_1.jpeg";
+        var existsTwo      = "/Media/Album 1/IMG_01234_2.jpeg";
+        var expectedResult = "/Media/Album 1/IMG_01234_3.jpeg";
 
         var mockFileSystem = new Mock<IFileSystem>();
         var mockFileInfo = new Mock<IFileInfo>();
 
         mockFileInfo.Setup(fi => fi.Exists).Returns(true);
         mockFileInfo.Setup(fi => fi.FullName).Returns(filename);
-        mockFileInfo.Setup(fi => fi.Name).Returns("photo-exists_4.jpeg");
+        mockFileInfo.Setup(fi => fi.Name).Returns("IMG_01234.jpeg");
         mockFileInfo.Setup(fi => fi.Extension).Returns(".jpeg");
         mockFileInfo.Setup(fi => fi.DirectoryName).Returns("/Media/Album 1");
 
-        var secondMockFileInfo = new Mock<IFileInfo>();
-        secondMockFileInfo.Setup(fi => fi.Exists).Returns(false);
-
         mockFileSystem.Setup(fs => fs.FileInfo.New(It.Is<string>(s => s == filename))).Returns(mockFileInfo.Object);
-        mockFileSystem.Setup(fs => fs.FileInfo.New(It.Is<string>(s => s == expectedResult))).Returns(secondMockFileInfo.Object);
+        mockFileSystem.Setup(fs => fs.File.Exists(It.Is<string>(s => s == existsOne || s == existsTwo))).Returns(true);
+        mockFileSystem.Setup(fs => fs.File.Exists(It.Is<string>(s => s == expectedResult))).Returns(false);
 
         _fileSystem = mockFileSystem.Object;
         _service = new PhotoService(Utilities.GetInMemoryDbContext(), _commentService, _fileSystem, _logger);
