@@ -25,9 +25,6 @@ public class UserServiceTests
         var dbContext = Utilities.GetInMemoryDbContext();
         var logger = new Logger<UserService>(new LoggerFactory());
 
-        dbContext.Database.OpenConnection();
-        dbContext.Database.Migrate();
-
         dbContext.SeedUsers($"{string.Join(';', _users.Select(u => $"{u.Item1}={u.Item2}"))}");
 
         sut = new UserService(dbContext, logger);
