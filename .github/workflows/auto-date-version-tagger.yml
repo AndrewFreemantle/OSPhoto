@@ -1,0 +1,67 @@
+name: Automatic Date-Based Version Tagger
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.github/**'
+
+jobs:
+  create_version_tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to push new tags
+
+    steps:
+      -
+        name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches all history and tags
+        env:
+          GH_TOKEN: ${{ secrets.OSPHOTO_ACTIONS_PAT }}
+      -
+        name: Create and Push Date Version Tag
+        id: create_push_tag
+        env:
+          GH_TOKEN: ${{ secrets.OSPHOTO_ACTIONS_PAT }}
+        run: |
+          #git config user.name "GitHub Action"
+          #git config user.email "action@github.com"
+
+          CURRENT_DATE_PART=$(date +'%Y.%m.%d')
+          BASE_TAG="v${CURRENT_DATE_PART}"
+
+          # Fetch all tags from remote to ensure we have the latest state
+          git fetch --tags --force
+
+          # List all tags for the current date, sort them to find the latest/highest
+          # sort -V handles natural sort for versions like -2, -10
+          LATEST_TAG_FOR_DATE=$(git tag -l "${BASE_TAG}*" | sort -V | tail -n 1)
+
+          NEW_TAG=""
+          if [ -z "$LATEST_TAG_FOR_DATE" ]; then
+            # No tags for this date yet, this is the first.
+            NEW_TAG="${BASE_TAG}"
+          else
+            # Tags for this date exist. Determine the next suffix.
+            if [ "$LATEST_TAG_FOR_DATE" == "$BASE_TAG" ]; then
+              # Base tag (vYYYY.MM.DD) exists, so the new one is vYYYY.MM.DD-2
+              NEW_TAG="${BASE_TAG}-2"
+            else
+              # A suffixed tag (vYYYY.MM.DD-X) exists. Increment the suffix.
+              # Extract the current suffix X from vYYYY.MM.DD-X
+              CURRENT_SUFFIX=$(echo "$LATEST_TAG_FOR_DATE" | awk -F- '{print $NF}')
+              NEW_SUFFIX=$((CURRENT_SUFFIX + 1))
+              NEW_TAG="${BASE_TAG}-${NEW_SUFFIX}"
+            fi
+          fi
+
+          echo "Determined new tag: $NEW_TAG"
+          # echo "::set-output name=final_tag::$NEW_TAG"
+
+          # Tag the current commit (HEAD) and push the new tag
+          git tag "$NEW_TAG" HEAD
+          git push origin "$NEW_TAG"
+          echo "Pushed tag $NEW_TAG"
