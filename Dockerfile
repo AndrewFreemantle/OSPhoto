@@ -11,10 +11,6 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1
 ARG BUILD_CONFIGURATION=Release
 
-# TODO: find a way to export the dev cert and import/reference it from final (runtime only)
-#       we can then enable https (or use certbot instead somehow...)
-RUN dotnet dev-certs https
-
 WORKDIR /src
 COPY ["OSPhoto.sln", "/src"]
 COPY ["OSPhoto.Common.Tests/OSPhoto.Common.Tests.csproj", "OSPhoto.Common.Tests/"]
