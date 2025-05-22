@@ -6,10 +6,12 @@ using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
 using File = System.IO.File;
 using DbPhoto = OSPhoto.Common.Database.Models.Photo;
+using Microsoft.Extensions.Options;
+using OSPhoto.Common.Configuration;
 
 namespace OSPhoto.Common.Services;
 
-public class VideoService(ApplicationDbContext dbContext, IFileSystem fileSystem, ILogger<VideoService> logger) : ServiceBase(dbContext, fileSystem, logger), IVideoService
+public class VideoService(ApplicationDbContext dbContext, IFileSystem fileSystem, IOptions<AppSettings> settings, ILogger<VideoService> logger) : ServiceBase(dbContext, fileSystem, settings, logger), IVideoService
 {
     public async Task<Stream> GetThumbnail(string id, string? size = "small")
     {
@@ -35,7 +37,7 @@ public class VideoService(ApplicationDbContext dbContext, IFileSystem fileSystem
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Video GetThumbnail failed");
+            this.logger.LogError(e, "Video GetThumbnail failed");
             return Stream.Null;
         }
         finally

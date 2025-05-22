@@ -1,8 +1,10 @@
 using System.IO.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework.Internal;
+using OSPhoto.Common.Configuration;
 using OSPhoto.Common.Database;
 using OSPhoto.Common.Exceptions;
 using OSPhoto.Common.Interfaces;
@@ -18,6 +20,7 @@ namespace OSPhoto.Common.Tests.Services;
 public class PhotoServiceTests
 {
     private string _contentRootPath;
+    private IOptions<AppSettings> _settings;
     private IAlbumService _albumService;
     private IFileSystem _fileSystem;
     private ICommentService _commentService;
@@ -36,17 +39,18 @@ public class PhotoServiceTests
         _contentRootPath = currentDirectory.Parent?.Parent?.Parent?.Parent?.FullName ?? string.Empty;
 
         Environment.SetEnvironmentVariable("MEDIA_PATH", Path.Join(_contentRootPath, "Media"));
+        _settings = Options.Create(new AppSettings());
 
         _fileSystem = new FileSystem();
 
         var albumLogger = new Logger<AlbumService>(new LoggerFactory());
-        _albumService = new AlbumService(Utilities.GetInMemoryDbContext(), _fileSystem, albumLogger);
+        _albumService = new AlbumService(Utilities.GetInMemoryDbContext(), _fileSystem, _settings, albumLogger);
 
         var commentLogger = new Logger<CommentService>(new LoggerFactory());
         _commentService = new CommentService(Utilities.GetInMemoryDbContext(), commentLogger);
 
         _logger = new Logger<PhotoService>(new LoggerFactory());
-        _service = new PhotoService(Utilities.GetInMemoryDbContext(), _commentService, _fileSystem, _logger);
+        _service = new PhotoService(Utilities.GetInMemoryDbContext(), _commentService, _fileSystem, _settings, _logger);
     }
 
     [Test]
@@ -76,7 +80,7 @@ public class PhotoServiceTests
         mockFileSystem.Setup(fs => fs.FileInfo.New(It.IsAny<string>())).Returns(mockFileInfo.Object);
 
         _fileSystem = mockFileSystem.Object;
-        _service = new PhotoService(Utilities.GetInMemoryDbContext(), _commentService, _fileSystem, _logger);
+        _service = new PhotoService(Utilities.GetInMemoryDbContext(), _commentService, _fileSystem, _settings, _logger);
 
         // Act
         var result = await _service.CheckIfDestinationExists(filename);
@@ -105,7 +109,7 @@ public class PhotoServiceTests
         mockFileSystem.Setup(fs => fs.File.Exists(It.Is<string>(s => s == expectedResult))).Returns(false);
 
         _fileSystem = mockFileSystem.Object;
-        _service = new PhotoService(Utilities.GetInMemoryDbContext(), _commentService, _fileSystem, _logger);
+        _service = new PhotoService(Utilities.GetInMemoryDbContext(), _commentService, _fileSystem, _settings, _logger);
 
         // Act
         var result = await _service.CheckIfDestinationExists(filename);
@@ -136,7 +140,7 @@ public class PhotoServiceTests
         mockFileSystem.Setup(fs => fs.File.Exists(It.Is<string>(s => s == expectedResult))).Returns(false);
 
         _fileSystem = mockFileSystem.Object;
-        _service = new PhotoService(Utilities.GetInMemoryDbContext(), _commentService, _fileSystem, _logger);
+        _service = new PhotoService(Utilities.GetInMemoryDbContext(), _commentService, _fileSystem, _settings, _logger);
 
         // Act
         var result = await _service.CheckIfDestinationExists(filename);

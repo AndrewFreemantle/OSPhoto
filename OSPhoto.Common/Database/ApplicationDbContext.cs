@@ -23,11 +23,6 @@ public class ApplicationDbContext : DbContext
     public ApplicationDbContext()
     {
     }
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder
-            .UseSqlite($"Data Source={Environment.GetEnvironmentVariable("DATABASE_PATH")}");
-    }
     #endregion
 
     public void CreateDatabase(string? databasePath = null)

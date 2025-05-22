@@ -1,5 +1,7 @@
 using OSPhoto.Api;
 using OSPhoto.Common.Models;
+using OSPhoto.Common.Configuration;
+using Microsoft.Extensions.Options;
 
 public class AuthRequest : RequestBase
 {
@@ -25,11 +27,11 @@ public class AuthResponseFailure() : AuthResponse(false)
     }
 }
 
-public class AuthResponseSuccess(string sessionId, string username) : AuthResponse(true)
+public class AuthResponseSuccess(string sessionId, string username, IOptions<AppSettings> options) : AuthResponse(true)
 {
-    public AuthResponseData Data => new (sessionId, username);
+    public AuthResponseData Data => new (sessionId, username, options);
 
-    public class AuthResponseData(string sessionId, string username)
+    public class AuthResponseData(string sessionId, string username, IOptions<AppSettings> options)
     {
         public string Sid => sessionId;
         public string Username => username;
@@ -41,7 +43,7 @@ public class AuthResponseSuccess(string sessionId, string username) : AuthRespon
         public bool IsAdmin { get; set; } = true;
 
         [JsonPropertyName("allow_comment")]
-        public bool AllowComment { get; set; } = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ALLOW_COMMENTS"));
+        public bool AllowComment { get; set; } = options.Value.AllowComments;
         public Permission Permission { get; set; } = new();
 
         [JsonPropertyName("enable_face_recog")]
@@ -55,7 +57,7 @@ public class AuthResponseSuccess(string sessionId, string username) : AuthRespon
     }
 }
 
-public class Auth(IUserService userService) : Endpoint<AuthRequest, AuthResponse>
+public class Auth(IUserService userService, IOptions<AppSettings> options) : Endpoint<AuthRequest, AuthResponse>
 {
     public override void Configure()
     {
@@ -79,7 +81,7 @@ public class Auth(IUserService userService) : Endpoint<AuthRequest, AuthResponse
                     await SendAsync(new AuthResponseFailure());
                 else
                 {
-                    var res = new AuthResponseSuccess(sessionId, req.Username);
+                    var res = new AuthResponseSuccess(sessionId, req.Username, options);
                     Logger.LogInformation(" > user: {username}, sid: {sid}"
                         , res.Data.Username
                         , res.Data.Sid);

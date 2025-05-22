@@ -8,29 +8,42 @@ using OSPhoto.Common.Models;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
 using Exception = System.Exception;
+using OSPhoto.Common.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace OSPhoto.Common.Services;
 
-public class AlbumService(ApplicationDbContext dbContext, IFileSystem fileSystem, ILogger<AlbumService> logger) : IAlbumService
+public class AlbumService : IAlbumService
 {
-    private string _mediaPath = Environment.GetEnvironmentVariable("MEDIA_PATH");
+    private readonly ApplicationDbContext dbContext;
+    private readonly IFileSystem fileSystem;
+    private readonly IOptions<AppSettings> settings;
+    private readonly ILogger<AlbumService> logger;
 
-    public string MediaPath => _mediaPath;
+    public AlbumService(ApplicationDbContext dbContext, IFileSystem fileSystem, IOptions<AppSettings> settings, ILogger<AlbumService> logger)
+    {
+        this.dbContext = dbContext;
+        this.fileSystem = fileSystem;
+        this.settings = settings;
+        this.logger = logger;
+    }
+
+    public string MediaPath => settings.Value.MediaPath;
 
     public AlbumResult Get(string id = "")
     {
         try
         {
             var path = string.IsNullOrEmpty(id)
-                ? _mediaPath
-                : Path.Join(_mediaPath, ItemBase.GetPathFromId(id));
+                ? settings.Value.MediaPath
+                : Path.Join(settings.Value.MediaPath, ItemBase.GetPathFromId(id));
 
             return new AlbumResult(GetContentDirectory(path)
                 .EnumerateFileSystemInfos()
                 .Where(fsi => fsi is IDirectoryInfo || (fsi is IFileInfo fileInfo && (fileInfo.IsImageFileType() || fileInfo.IsVideoFileType())))
-                .Select(fsi => ItemBase.ConvertToItemBase(fsi, _mediaPath, dbContext))
+                .Select(fsi => ItemBase.ConvertToItemBase(fsi, settings.Value.MediaPath, dbContext))
                 .OrderByDescending(item => item.GetType() == typeof(Album))
-                .ThenBy(item => item.Name), path, _mediaPath);
+                .ThenBy(item => item.Name), path, settings.Value.MediaPath);
         }
         catch (Exception e)
         {
@@ -44,8 +57,8 @@ public class AlbumService(ApplicationDbContext dbContext, IFileSystem fileSystem
         try
         {
             var parentPath = string.IsNullOrEmpty(parentAlbumId)
-                ? _mediaPath
-                : Path.Join(_mediaPath, ItemBase.GetPathFromId(parentAlbumId));
+                ? settings.Value.MediaPath
+                : Path.Join(settings.Value.MediaPath, ItemBase.GetPathFromId(parentAlbumId));
 
             Directory.CreateDirectory(Path.Join(parentPath, albumName));
         }
@@ -75,7 +88,7 @@ public class AlbumService(ApplicationDbContext dbContext, IFileSystem fileSystem
         else
         {
             // return the photo id of the last image file within the album/directory
-            var albumPath = Path.Join(_mediaPath, ItemBase.GetPathFromId(id));
+            var albumPath = Path.Join(settings.Value.MediaPath, ItemBase.GetPathFromId(id));
             var dirInfo = fileSystem.DirectoryInfo.New(albumPath);
 
             var lastImageFileInfo = dirInfo
@@ -95,11 +108,11 @@ public class AlbumService(ApplicationDbContext dbContext, IFileSystem fileSystem
         // grab the file, then return a resized version
         var memoryStream = new MemoryStream();
 
-        imagePath ??= Path.Combine(_mediaPath, ItemBase.GetPathFromId(id));
+        imagePath ??= Path.Combine(settings.Value.MediaPath, ItemBase.GetPathFromId(id));
 
         using (var image = SixLabors.ImageSharp.Image.Load(imagePath))
         {
-            image.Mutate(x => x.Resize(ThumbnailInfo.ThumbnailWidthInPixels, 0));
+            image.Mutate(x => x.Resize(settings.Value.ThumbnailWidthInPixels, 0));
             image.Save(memoryStream, new JpegEncoder());
             memoryStream.Position = 0;
             return memoryStream;
@@ -114,7 +127,7 @@ public class AlbumService(ApplicationDbContext dbContext, IFileSystem fileSystem
             if (albumRecord == null)
                 await dbContext.Albums.AddAsync(new Database.Models.Album(
                     id,
-                    Path.Join(_mediaPath, ItemBase.GetPathFromId(id)),
+                    Path.Join(settings.Value.MediaPath, ItemBase.GetPathFromId(id)),
                     null,
                     null,
                     photoId));
@@ -146,7 +159,7 @@ public class AlbumService(ApplicationDbContext dbContext, IFileSystem fileSystem
             if (albumRecord == null)
                 await dbContext.Albums.AddAsync(new Database.Models.Album(
                     id,
-                    Path.Join(_mediaPath, ItemBase.GetPathFromId(id)),
+                    Path.Join(settings.Value.MediaPath, ItemBase.GetPathFromId(id)),
                     title,
                     description,
                     coverPhotoId));
@@ -178,11 +191,11 @@ public class AlbumService(ApplicationDbContext dbContext, IFileSystem fileSystem
     public async Task<bool> Delete(string id)
     {
         var albumPath = string.IsNullOrEmpty(id)
-            ? _mediaPath
-            : Path.Join(_mediaPath, ItemBase.GetPathFromId(id));
+            ? settings.Value.MediaPath
+            : Path.Join(settings.Value.MediaPath, ItemBase.GetPathFromId(id));
 
         // shouldn't be possible to select or delete the MediaPath root, but prevent it happening anyway
-        if (albumPath == _mediaPath)
+        if (albumPath == settings.Value.MediaPath)
             return false;
 
         try
@@ -218,7 +231,7 @@ public class AlbumService(ApplicationDbContext dbContext, IFileSystem fileSystem
         return fileSystem.DirectoryInfo.New(
             string.IsNullOrEmpty(path)
             || string.IsNullOrWhiteSpace(path)
-                ? _mediaPath
-                : Path.Combine(_mediaPath, path));
+                ? settings.Value.MediaPath
+                : Path.Combine(settings.Value.MediaPath, path));
     }
 }

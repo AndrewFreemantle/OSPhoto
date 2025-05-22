@@ -1,5 +1,7 @@
 using System.IO.Abstractions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using OSPhoto.Common.Configuration;
 using OSPhoto.Common.Exceptions;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
@@ -14,6 +16,7 @@ namespace OSPhoto.Common.Tests.Services;
 public class AlbumServiceTests
 {
     private string _contentRootPath;
+    private IOptions<AppSettings> _settings;
     private IAlbumService _service;
 
     [SetUp]
@@ -27,9 +30,10 @@ public class AlbumServiceTests
         _contentRootPath = currentDirectory.Parent?.Parent?.Parent?.Parent?.FullName ?? string.Empty;
 
         Environment.SetEnvironmentVariable("MEDIA_PATH", Path.Join(_contentRootPath, "Media"));
+        _settings = Options.Create(new AppSettings());
 
         var logger = new Logger<AlbumService>(new LoggerFactory());
-        _service = new AlbumService(Utilities.GetInMemoryDbContext(), new FileSystem(), logger);
+        _service = new AlbumService(Utilities.GetInMemoryDbContext(), new FileSystem(), _settings, logger);
     }
 
     [Test]

@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
+using OSPhoto.Common.Configuration;
 using OSPhoto.Common.Database;
 using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
@@ -9,7 +11,7 @@ using DbPhoto = OSPhoto.Common.Database.Models.Photo;
 
 namespace OSPhoto.Common.Services;
 
-public class PhotoService(ApplicationDbContext dbContext, ICommentService commentService, IFileSystem fileSystem, ILogger<PhotoService> logger) : ServiceBase(dbContext, fileSystem, logger), IPhotoService
+public class PhotoService(ApplicationDbContext dbContext, ICommentService commentService, IFileSystem fileSystem, IOptions<AppSettings> settings, ILogger<PhotoService> logger) : ServiceBase(dbContext, fileSystem, settings, logger), IPhotoService
 {
     public async Task<Stream> GetThumbnail(string id)
     {
@@ -22,7 +24,7 @@ public class PhotoService(ApplicationDbContext dbContext, ICommentService commen
 
         using (var image = SixLabors.ImageSharp.Image.Load(imagePath))
         {
-            image.Mutate(x => x.Resize(ThumbnailInfo.ThumbnailWidthInPixels, 0));
+            image.Mutate(x => x.Resize(settings.Value.ThumbnailWidthInPixels, 0));
             image.Save(memoryStream, new JpegEncoder());
             memoryStream.Position = 0;
             return memoryStream;
@@ -64,7 +66,7 @@ public class PhotoService(ApplicationDbContext dbContext, ICommentService commen
         // add in the fileName and check if it exists
         destination = await CheckIfDestinationExists(Path.Combine(destination, fileName));
 
-        logger.LogInformation("Writing new file to: {destination}", destination);
+        this.logger.LogInformation("Writing new file to: {destination}", destination);
         try
         {
             using (var stream = new FileStream(destination, FileMode.Create))
@@ -74,7 +76,7 @@ public class PhotoService(ApplicationDbContext dbContext, ICommentService commen
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Error uploading file to {destination}", destination);
+            this.logger.LogError(e, "Error uploading file to {destination}", destination);
             return false;
         }
 
@@ -83,7 +85,7 @@ public class PhotoService(ApplicationDbContext dbContext, ICommentService commen
         {
             try
             {
-                logger.LogInformation("Writing new file title/desc to database");
+                this.logger.LogInformation("Writing new file title/desc to database");
                 title = title ?? fileName;
                 description = description ?? null;
 
@@ -103,7 +105,7 @@ public class PhotoService(ApplicationDbContext dbContext, ICommentService commen
             }
             catch (Exception e)
             {
-                logger.LogWarning(e, "Error saving title and description for {destination}", destination);
+                this.logger.LogWarning(e, "Error saving title and description for {destination}", destination);
             }
         }
 

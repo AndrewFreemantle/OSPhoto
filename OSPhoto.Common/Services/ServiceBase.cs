@@ -4,12 +4,27 @@ using OSPhoto.Common.Interfaces;
 using OSPhoto.Common.Models;
 using OSPhoto.Common.Services.Models;
 using DbPhoto = OSPhoto.Common.Database.Models.Photo;
+using OSPhoto.Common.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace OSPhoto.Common.Services;
 
-public class ServiceBase(ApplicationDbContext dbContext, IFileSystem fileSystem, ILogger logger) : IServiceBase
+public class ServiceBase : IServiceBase
 {
-    protected string _mediaPath = Environment.GetEnvironmentVariable("MEDIA_PATH");
+    protected readonly string _mediaPath;
+    protected readonly ApplicationDbContext dbContext;
+    protected readonly IFileSystem fileSystem;
+    protected readonly IOptions<AppSettings> settings;
+    protected readonly ILogger logger;
+
+    public ServiceBase(ApplicationDbContext dbContext, IFileSystem fileSystem, IOptions<AppSettings> settings, ILogger logger)
+    {
+        this.dbContext = dbContext;
+        this.fileSystem = fileSystem;
+        this.settings = settings;
+        this.logger = logger;
+        _mediaPath = settings.Value.MediaPath;
+    }
 
     public ItemBase GetInfo(string id)
     {

@@ -13,21 +13,40 @@ using Photo = OSPhoto.Common.Models.Photo;
 using DbAlbum = OSPhoto.Common.Database.Models.Album;
 using Album = OSPhoto.Common.Models.Album;
 using DbComment = OSPhoto.Common.Database.Models.Comment;
+using OSPhoto.Common.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace OSPhoto.Common.Services;
 
-public class ImportService(IPhotoService photoService, IAlbumService albumService, ApplicationDbContext dbContext, IFileSystem fileSystem, ILogger<ImportService> logger) : IImportService
+public class ImportService : IImportService
 {
-    private string _synoSharePathPrefix = Environment.GetEnvironmentVariable("SYNO_SHARE_PATH_PREFIX") ?? "/volume1/photo/";
-    private string _mediaPath = Environment.GetEnvironmentVariable("MEDIA_PATH");
-
-    private readonly string _importPath = Environment.GetEnvironmentVariable("IMPORT_PATH");
-
-    private readonly string _importPathSuccess = Path.Join(Environment.GetEnvironmentVariable("IMPORT_PATH"), "success");
-    private readonly string _importPathFailed = Path.Join(Environment.GetEnvironmentVariable("IMPORT_PATH"), "failed");
-
+    private readonly string _synoSharePathPrefix;
+    private readonly string _mediaPath;
+    private readonly string _importPath;
+    private readonly string _importPathSuccess;
+    private readonly string _importPathFailed;
     private readonly string _importDateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+    private readonly string? _importTimezoneCulture;
+    private readonly IPhotoService photoService;
+    private readonly IAlbumService albumService;
+    private readonly ApplicationDbContext dbContext;
+    private readonly IFileSystem fileSystem;
+    private readonly ILogger<ImportService> logger;
 
+    public ImportService(IPhotoService photoService, IAlbumService albumService, ApplicationDbContext dbContext, IFileSystem fileSystem,  IOptions<AppSettings> settings, ILogger<ImportService> logger)
+    {
+        this.photoService = photoService;
+        this.albumService = albumService;
+        this.dbContext = dbContext;
+        this.fileSystem = fileSystem;
+        this.logger = logger;
+        _synoSharePathPrefix = settings.Value.SynoSharePathPrefix;
+        _mediaPath = settings.Value.MediaPath;
+        _importPath = settings.Value.ImportPath;
+        _importPathSuccess = Path.Join(settings.Value.ImportPath, "success");
+        _importPathFailed = Path.Join(settings.Value.ImportPath, "failed");
+        _importTimezoneCulture = settings.Value.ImportTimezoneCulture;
+    }
 
     public async Task RunAsync()
     {
@@ -430,9 +449,8 @@ public class ImportService(IPhotoService photoService, IAlbumService albumServic
         try
         {
             // as the imported data doesn't have a timezone, default to current culture unless specified
-            var importTimezoneCulture = Environment.GetEnvironmentVariable("IMPORT_TIMEZONE_CULTURE");
-            var importCultureInfo = !string.IsNullOrEmpty(importTimezoneCulture)
-                ? new CultureInfo(importTimezoneCulture)
+            var importCultureInfo = !string.IsNullOrEmpty(_importTimezoneCulture)
+                ? new CultureInfo(_importTimezoneCulture)
                 : CultureInfo.CurrentCulture;
 
             using (var reader = new StreamReader(csvFilename))

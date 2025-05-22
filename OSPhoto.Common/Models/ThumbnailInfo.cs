@@ -1,18 +1,21 @@
+using System.Text.Json.Serialization;
 namespace OSPhoto.Common.Models;
+using OSPhoto.Common.Configuration;
+using Microsoft.Extensions.Options;
 
-public class ThumbnailInfo(int x, int y, long modifiedTime)
+public class ThumbnailInfo
 {
-    /// <summary>
-    /// Returns the system-wide Thumbnail pixel width
-    /// </summary>
-    public static int ThumbnailWidthInPixels => int.Parse(Environment.GetEnvironmentVariable("THUMB_WIDTH_PX") ?? "500");
-
     [JsonPropertyName("resolutionx")]
-    public int ResolutionX { get; set; } = x;
-
+    public int ResolutionX { get; set; }
     [JsonPropertyName("resolutiony")]
-    public int ResolutionY { get; set; } = y;
-
+    public int ResolutionY { get; set; }
     [JsonPropertyName("mtime")]
-    public long ModifiedTime { get; set; } = modifiedTime;
+    public long ModifiedTime { get; set; }
+
+    public ThumbnailInfo(int x, int y, long modifiedTime)
+    {
+        ResolutionX = x;
+        ResolutionY = y;
+        ModifiedTime = modifiedTime;
+    }
 }

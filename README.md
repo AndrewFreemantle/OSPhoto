@@ -35,11 +35,22 @@ Once running, OSPhoto will accept http connections on port `5000` using any of t
 
 ### Configuration options
 
-OSPhoto's configuration options can be altered by environment variables
-
-| Environment Variable | Description                                                   | Default  |
-|----------------------|---------------------------------------------------------------|----------|
-| ALLOW_COMMENTS       | Enables commenting threads on media. Set any value to enable. | disabled |
+OSPhoto's configuration options can be altered by environment variables. These can be added to the `docker run` command with `-e`:
+```shell
+  -e 'ALLOW_COMMENTS`='true' \
+```
+| Environment Variable         | Description                                                       | Default                                                                                                                                                                                                                     |
+|------------------------------|-------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ALLOW_COMMENTS`               | Enables commenting threads on media. Set any value to enable      | disabled                                                                                                                                                                                                                    |
+| `APPDATA_PATH`               | Path to store metadata (such as photo titles, comments, tags, etc) | `/AppData`                                                                                                                                                                                                                    |
+| `DATABASE_CONNECTION_STRING` | Full database connection string                                   | `{DATABASE_PATH}/osphoto.db`                                                                                                                                                                                                  |
+| `DATABASE_PATH`              | Path to store the database file (SQLite by default)               | `{APPDATA_PATH}/database`                                                                                                                                                                                                     |
+| `IMPORT_PATH`                | Path to find import files                                         | `{APPDATA_PATH}/import`                                                                                                                                                                                                       |
+| `IMPORT_TIMEZONE_CULTURE`    | Timezone culture to use when importing data                       | [CultureInfo.CurrentCulture](https://learn.microsoft.com/en-us/dotnet/api/system.globalization.cultureinfo.currentculture?view=net-8.0#system-globalization-cultureinfo-currentculture) ([list](https://ideone.com/AhcI3w)) |
+| `MEDIA_PATH`                 | Path to your photo and media collection                           | `/Media`                                                                                                                                                                                                                      |
+| `SYNO_SHARE_PATH_PREFIX`     | Synology PhotoStation media location (used when importing)        | `/volume1/photo/`                                                                                                                                                                                                             |
+| `THUMB_WIDTH_PX`             | Image and video thumbnail size, in pixels                         | `500`                                                                                                                                                                                                                         |
+| `USERS`                      | Authenticated user accounts in format User1=Pass2;User2=Pass2     | empty (allows any user/password)                                                                                                                                                                                            |
 
 ### Rationale
 
