@@ -15,14 +15,13 @@ jobs:
         name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetches all history and tags
           token: ${{ secrets.OSPHOTO_ACTIONS_PAT }}
+          fetch-depth: 0 # Fetches all history and tags
       -
         name: Create and Push Date Version Tag
         id: create_push_tag
         run: |
-
-          CURRENT_DATE_PART=$(date +'%Y.%m.%d')
+          CURRENT_DATE_PART=$(date +'%Y.%-m.%-d')
           BASE_TAG="v${CURRENT_DATE_PART}"
 
           # Fetch all tags from remote to ensure we have the latest state
@@ -43,7 +42,7 @@ jobs:
               NEW_TAG="${BASE_TAG}-2"
             else
               # A suffixed tag (vYYYY.MM.DD-X) exists. Increment the suffix.
-              # Extract the current suffix X from vYYYY.MM.DD-X
+              # Extract the current suffix X from vYYYY.M.DD-X
               CURRENT_SUFFIX=$(echo "$LATEST_TAG_FOR_DATE" | awk -F- '{print $NF}')
               NEW_SUFFIX=$((CURRENT_SUFFIX + 1))
               NEW_TAG="${BASE_TAG}-${NEW_SUFFIX}"
