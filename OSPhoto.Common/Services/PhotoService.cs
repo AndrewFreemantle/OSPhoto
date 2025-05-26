@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using OSPhoto.Common.Configuration;
@@ -64,21 +65,66 @@ public class PhotoService(ApplicationDbContext dbContext, ICommentService commen
             destination = Path.Combine(destination, destinationAlbum);
 
         // add in the fileName and check if it exists
-        destination = await CheckIfDestinationExists(Path.Combine(destination, fileName));
+        var fullDestination = await CheckIfDestinationExists(Path.Combine(destination, fileName));
 
-        this.logger.LogInformation("Writing new file to: {destination}", destination);
+        this.logger.LogInformation("Writing new file to: {fullDestination}", fullDestination);
         try
         {
-            using (var stream = new FileStream(destination, FileMode.Create))
+            using (var stream = new FileStream(fullDestination, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
         }
         catch (Exception e)
         {
-            this.logger.LogError(e, "Error uploading file to {destination}", destination);
+            this.logger.LogError(e, "Error uploading file to {fullDestination}", fullDestination);
             return false;
         }
+
+        // TODO: Pull this workaround into a plugin, once we have plugin support
+        #region iOS bug workaround
+            //  iOS imported geo-tagged photos bug workaround... if a geotagged photo is imported into iOS, iOS assumes that
+            //      no timezone on the Date Taken means the media was created in the Geo-Located timezone and imported into
+            //      into the timezone of the iOS.
+            //      This is often incorrect as the camera used to take the photo had the date and time already set correctly
+            //      for the timezone the photo was taken in.
+            //      While the Date Taken and EXIF metadata are correct, the filename iOS generates can be off by hours.
+            //      This is a quick workaround to ensure the filename matches the date taken.
+
+        if (Regex.IsMatch(fileName, @"^IMG_\d{8}_\d{6}\.JPG$"))
+        {
+            try
+            {
+                // correct format, now what should it be?
+                var photo = GetInfo(ItemBase.GetIdForPath(_mediaPath, fileSystem.FileInfo.New(fullDestination), Photo.IdPrefix));
+                var fileNameBasedOnTakenDate = $"IMG_{photo.Info.TakenDate.Replace("-", "").Replace(":", "").Replace(" ", "_")}.JPG";
+                if (!fileName.Equals(fileNameBasedOnTakenDate, StringComparison.OrdinalIgnoreCase)
+                    && photo.Additional.PhotoExif.Camera != null
+                    && photo.Additional.PhotoExif.Camera.Contains("OLYMPUS"))
+                {
+                    // rename / move the file
+                    this.logger.LogInformation("iOS imported-geotagged filename bug spotted - renaming file from {fileName} to {fileNameBasedOnTakenDate}", fileName, fileNameBasedOnTakenDate);
+
+                    // add in the new filename and check if it exists
+                    var fullDestinationBasedOnTakenDate = await CheckIfDestinationExists(Path.Combine(destination, fileNameBasedOnTakenDate));
+
+                    try
+                    {
+                        fileSystem.File.Move(fullDestination, fullDestinationBasedOnTakenDate);
+                        fullDestination = fullDestinationBasedOnTakenDate;
+                    }
+                    catch (Exception innerE)
+                    {
+                        this.logger.LogError(innerE, "Error renaming file to {fullDestinationBasedOnTakenDate}", fullDestinationBasedOnTakenDate);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                this.logger.LogError(e, "iOS imported-geotagged filename bug fix error. File not renamed");
+            }
+        }
+        #endregion
 
         // any metadata to save?
         if (!string.IsNullOrEmpty(title) || !string.IsNullOrEmpty(description))
@@ -89,7 +135,7 @@ public class PhotoService(ApplicationDbContext dbContext, ICommentService commen
                 title = title ?? fileName;
                 description = description ?? null;
 
-                var id = ItemBase.GetIdForPath(_mediaPath, fileSystem.FileInfo.New(destination), Photo.IdPrefix);
+                var id = ItemBase.GetIdForPath(_mediaPath, fileSystem.FileInfo.New(fullDestination), Photo.IdPrefix);
                 var photo = await dbContext.Photos.FindAsync(id);
                 if (photo == null)
                     await dbContext.Photos.AddAsync(new DbPhoto(id, _mediaPath, title, description));
@@ -105,7 +151,7 @@ public class PhotoService(ApplicationDbContext dbContext, ICommentService commen
             }
             catch (Exception e)
             {
-                this.logger.LogWarning(e, "Error saving title and description for {destination}", destination);
+                this.logger.LogWarning(e, "Error saving title and description for {fullDestination}", fullDestination);
             }
         }
 
