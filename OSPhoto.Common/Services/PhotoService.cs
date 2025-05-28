@@ -111,6 +111,7 @@ public class PhotoService(ApplicationDbContext dbContext, ICommentService commen
                     try
                     {
                         fileSystem.File.Move(fullDestination, fullDestinationBasedOnTakenDate);
+                        fileName = fileNameBasedOnTakenDate;
                         fullDestination = fullDestinationBasedOnTakenDate;
                     }
                     catch (Exception innerE)
