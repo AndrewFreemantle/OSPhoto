@@ -30,14 +30,14 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="SixLabors.ImageSharp" Version="3.1.8" />
+      <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
       <PackageReference Include="System.IO.Abstractions" Version="22.0.14" />
     </ItemGroup>
 
     <!-- source: https://github.com/BcryptNet/bcrypt.net#dotnet6-1 -->
     <ItemGroup>
         <!-- emits global using BcryptNet = global::BCrypt.Net.BCrypt; -->
-        <Using Include="BCrypt.Net.BCrypt" Alias="BC"/>
+        <Using Include="BCrypt.Net.BCrypt" Alias="BC" />
     </ItemGroup>
     <ItemGroup>
       <Reference Include="Microsoft.AspNetCore.Http.Features">
