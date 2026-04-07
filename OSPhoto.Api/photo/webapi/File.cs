@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Mvc;
+
 namespace OSPhoto.Api.photo.webapi;
 
 public class FileRequest : RequestBase
@@ -19,6 +21,7 @@ public class FileResponse
     public bool Success => true;
 }
 
+[DisableRequestSizeLimit]
 public class FileUpload(IPhotoService service) : Endpoint<FileRequest, FileResponse>
 {
     public override void Configure()
@@ -28,6 +31,7 @@ public class FileUpload(IPhotoService service) : Endpoint<FileRequest, FileRespo
         AllowFileUploads();
     }
 
+    [DisableRequestSizeLimit]
     public override async Task HandleAsync(FileRequest req, CancellationToken ct)
     {
         Logger.LogInformation("File (method: {method})", req.Method);

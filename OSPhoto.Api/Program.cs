@@ -3,6 +3,7 @@ using Hangfire;
 using HeyRed.ImageSharp.Heif;
 using HeyRed.ImageSharp.Heif.Formats.Heif;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using NSwag;
@@ -76,10 +77,14 @@ builder.Services
     .AddScoped<IStatsService, StatsService>()
     .AddSingleton<IFileSystem, FileSystem>();
 
-// Configure Kestrel
+// Configure Kestrel and Form Options to allow large fiel uploads (for videos)
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
-    serverOptions.Limits.MaxRequestBodySize = null;     // disable the file upload limit
+    serverOptions.Limits.MaxRequestBodySize = long.MaxValue;
+});
+builder.Services.Configure<FormOptions>(o =>
+{
+    o.MultipartBodyLengthLimit = long.MaxValue;
 });
 
 var app = builder.Build();
